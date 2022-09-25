@@ -315,6 +315,7 @@ void Sys_SendKeyEvents(void)
                 Host_ShutdownServer(false);        
                 Sys_Quit ();
                 break;
+
             default:
                 break;
         }

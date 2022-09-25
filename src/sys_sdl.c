@@ -406,7 +406,6 @@ int main (int c, char **v)
     {
 // find time spent rendering last frame
         newtime = Sys_FloatTime ();
-		printf("%f\n", newtime);
         time = newtime - oldtime;
 
         if (cls.state == ca_dedicated)

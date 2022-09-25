@@ -118,7 +118,7 @@ void M_Print (int cx, int cy, char *str)
 {
 	while (*str)
 	{
-		M_DrawCharacter (cx, cy, (*str)+128);
+		M_DrawCharacter (cx, cy, (*str) + 128);
 		str++;
 		cx += 8;
 	}
@@ -293,13 +293,15 @@ void M_Main_Draw (void)
 	int		f;
 	qpic_t	*p;
 
+	// Left plaque
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
-	p = Draw_CachePic ("gfx/ttl_main.lmp");
+	// Top plaque
+	p = Draw_CachePic ("gfx/ttl_main.lmp");		
 	M_DrawPic ( (320-p->width)/2, 4, p);
+	// Menu options
 	M_DrawTransPic (72, 32, Draw_CachePic ("gfx/mainmenu.lmp") );
-
+	// Spining Logo
 	f = (int)(host_time * 10)%6;
-
 	M_DrawTransPic (54, 32 + m_main_cursor * 20, Draw_CachePic( va("gfx/menudot%i.lmp", f + 1 ) ) );
 }
 
@@ -3025,8 +3027,9 @@ void M_Init (void)
 
 void M_Draw (void)
 {
-	if (m_state == m_none || key_dest != key_menu)
+	if (m_state == m_none || key_dest != key_menu) {
 		return;
+	}
 
 	if (!m_recursiveDraw)
 	{

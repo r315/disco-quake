@@ -272,7 +272,7 @@ SetPal
 Debugging tool, just flashes the screen
 ===============
 */
-void SetPal (int i)
+static void SetPal (int i)
 {
 #if 0
 	static int old;

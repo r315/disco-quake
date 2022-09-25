@@ -335,7 +335,6 @@ void CL_ParseUpdate (int bits)
 	qboolean	forcelink;
 	entity_t	*ent;
 	int			num;
-	int			skin;
 
 	if (cls.signon == SIGNONS - 1)
 	{	// first update is the final signon stage
@@ -418,10 +417,13 @@ void CL_ParseUpdate (int bits)
 	}
 
 #ifdef GLQUAKE
+	int			skin;
+	
 	if (bits & U_SKIN)
 		skin = MSG_ReadByte();
 	else
 		skin = ent->baseline.skin;
+	
 	if (skin != ent->skinnum) {
 		ent->skinnum = skin;
 		if (num > 0 && num <= cl.maxclients)

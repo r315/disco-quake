@@ -109,8 +109,6 @@ Draw_Init
 */
 void Draw_Init (void)
 {
-	int		i;
-
 	draw_chars = W_GetLumpName ("conchars");
 	draw_disc = W_GetLumpName ("disc");
 	draw_backtile = W_GetLumpName ("backtile");
@@ -520,15 +518,15 @@ void Draw_CharToConback (int num, byte *dest)
 	int		drawline;
 	int		x;
 
-	row = num>>4;
-	col = num&15;
+	row = num >> 4;
+	col = num & 15;
 	source = draw_chars + (row<<10) + (col<<3);
 
 	drawline = 8;
 
 	while (drawline--)
 	{
-		for (x=0 ; x<8 ; x++)
+		for (x=0 ; x < 8; x++)
 			if (source[x])
 				dest[x] = 0x60 + source[x];
 		source += 128;
@@ -565,7 +563,7 @@ void Draw_ConsoleBackground (int lines)
 	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
 	dest = conback->data + 320 * 186 + 320 - 11 - 8 * strlen(ver);
 #else
-	dest = conback->data + 320 - 43 + 320*186;
+	dest = conback->data + 320 - 43 + 320 * 186;
 	sprintf (ver, "%4.2f", VERSION);
 #endif
 
@@ -586,7 +584,7 @@ void Draw_ConsoleBackground (int lines)
 			else
 			{
 				f = 0;
-				fstep = 320*0x10000/vid.conwidth;
+				fstep = 320 * 0x10000 / vid.conwidth;
 				for (x=0 ; x<vid.conwidth ; x+=4)
 				{
 					dest[x] = src[f>>16];

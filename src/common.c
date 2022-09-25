@@ -1371,8 +1371,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
     char            netpath[MAX_OSPATH];
     char            cachepath[MAX_OSPATH];
     pack_t          *pak;
-    int                     i;
-    int                     findtime, cachetime;
+    int             i;
+    int             findtime, cachetime;
 
     if (file && handle)
         Sys_Error ("COM_FindFile: both handle and file set");
