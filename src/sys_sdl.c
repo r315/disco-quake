@@ -10,6 +10,8 @@
 #ifndef __WIN32__
 #include <sys/stat.h>
 #include <signal.h>
+#include <time.h>
+#include <stddef.h>
 #else
 #include <sys/mman.h>
 #include <sys/wait.h>
@@ -302,7 +304,7 @@ float Sys_FloatTime (void)
 	if ( ! starttime )
 		starttime = clock();
 
-	return (clock()-starttime) * 1.0 / 1024;
+	return (float)(clock() - starttime) / CLOCKS_PER_SEC;
 
 #else
 
@@ -375,7 +377,7 @@ void moncontrol(int x)
 int main (int c, char **v)
 {
 
-	double		time, oldtime, newtime;
+	float		time, oldtime, newtime;
 	quakeparms_t parms;
 	extern int vcrFile;
 	extern int recording;
@@ -386,7 +388,7 @@ int main (int c, char **v)
 //	signal(SIGFPE, floating_point_exception_handler);
 	signal(SIGFPE, SIG_IGN);
 
-	parms.memsize = 16*1024*1024;
+	parms.memsize = 6*1024*1024;
 	parms.membase = malloc (parms.memsize);
 	parms.basedir = basedir;
 	parms.cachedir = cachedir;
@@ -421,7 +423,7 @@ int main (int c, char **v)
         if (time > sys_ticrate.value * 2)
             oldtime = newtime;
         else
-            oldtime += time;
+			oldtime += time;
 
         if (++frame > 10)
             moncontrol(1);      // profile only while we do each Quake frame

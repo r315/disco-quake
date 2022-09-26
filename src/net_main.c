@@ -54,7 +54,6 @@ static void Slist_Poll(void);
 PollProcedure	slistSendProcedure = {NULL, 0.0, Slist_Send};
 PollProcedure	slistPollProcedure = {NULL, 0.0, Slist_Poll};
 
-
 sizebuf_t		net_message;
 int				net_activeconnections = 0;
 
@@ -89,15 +88,23 @@ qboolean recording = false;
 
 int	net_driverlevel;
 
+static PollProcedure *pollProcedureList = NULL;
 
 double			net_time;
+int hostCacheCount = 0;
+hostcache_t hostcache[HOSTCACHESIZE];
 
+/*
+===================
+SetNetTime
+
+===================
+*/
 double SetNetTime(void)
 {
 	net_time = Sys_FloatTime();
 	return net_time;
 }
-
 
 /*
 ===================
@@ -362,8 +369,7 @@ NET_Connect
 ===================
 */
 
-int hostCacheCount = 0;
-hostcache_t hostcache[HOSTCACHESIZE];
+
 
 qsocket_t *NET_Connect (char *host)
 {
@@ -806,7 +812,7 @@ void NET_Init (void)
 	int			i;
 	int			controlSocket;
 	qsocket_t	*s;
-
+	
 	if (COM_CheckParm("-playback"))
 	{
 		net_numdrivers = 1;
@@ -921,9 +927,6 @@ void		NET_Shutdown (void)
 	}
 }
 
-
-static PollProcedure *pollProcedureList = NULL;
-
 void NET_Poll(void)
 {
 	PollProcedure *pp;
@@ -953,7 +956,6 @@ void NET_Poll(void)
 		pp->procedure(pp->arg);
 	}
 }
-
 
 void SchedulePollProcedure(PollProcedure *proc, double timeOffset)
 {

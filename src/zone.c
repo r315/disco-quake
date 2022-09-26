@@ -272,7 +272,7 @@ typedef struct
 	char	name[8];
 } hunk_t;
 
-static byte	*hunk_base;
+static byte		*hunk_base;
 static int		hunk_size;
 
 static int		hunk_low_used;
@@ -775,7 +775,7 @@ void Cache_Print (void)
 
 	for (cd = cache_head.next ; cd != &cache_head ; cd = cd->next)
 	{
-		Con_Printf ("%8i : %s\n", cd->size, cd->name);
+		Con_DPrintf ("%8i : %s\n", cd->size, cd->name);
 	}
 }
 

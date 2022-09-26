@@ -31,6 +31,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	LINUX_VERSION		1.30
 #define	X11_VERSION			1.10
 
+#define STR_EXPAND(S)  #S
+#define STR(X)   STR_EXPAND(X)
+
+#define VERSION_STRING  STR(VERSION)
+
+
 //define	PARANOID			// speed sapping error checking
 
 #ifdef QUAKE2
@@ -336,4 +342,4 @@ extern	cvar_t	chase_active;
 void Chase_Init (void);
 void Chase_Reset (void);
 void Chase_Update (void);
-void bcrc32(const unsigned char *buf, int len);
+void bcrc32(const unsigned char *buf, int len, const char *tag);
