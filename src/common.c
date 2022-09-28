@@ -911,8 +911,7 @@ void COM_FileBase (char *in, char *out)
     while (s != in && *s != '.')
         s--;
     
-    for (s2 = s ; *s2 && *s2 != '/' ; s2--)
-    ;
+    for (s2 = s ; s2 > in && *s2 != '/' ; s2--);
     
     if (s-s2 < 2)
         strcpy (out,"?model?");
@@ -1376,6 +1375,7 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
 
     if (file && handle)
         Sys_Error ("COM_FindFile: both handle and file set");
+        
     if (!file && !handle)
         Sys_Error ("COM_FindFile: neither handle or file set");
         
