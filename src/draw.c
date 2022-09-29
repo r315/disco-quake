@@ -554,21 +554,21 @@ void Draw_ConsoleBackground (int lines)
 
 // hack the version number directly into the pic
 #ifdef _WIN32
-	sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	v = sprintf (ver, "(WinQuake) %4.2f", (float)VERSION);
+	dest = conback->data + 320*186 + 320 - 11 - 8 * v;
 #elif defined(X11)
-	sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
-	dest = conback->data + 320*186 + 320 - 11 - 8*strlen(ver);
+	v = sprintf (ver, "(X11 Quake %2.2f) %4.2f", (float)X11_VERSION, (float)VERSION);
+	dest = conback->data + 320*186 + 320 - 11 - 8 * v;
 #elif defined(__linux__)
-	sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
-	dest = conback->data + 320 * 186 + 320 - 11 - 8 * strlen(ver);
+	v = sprintf (ver, "(Linux Quake %2.2f) %4.2f", (float)LINUX_VERSION, (float)VERSION);
+	dest = conback->data + 320 * 186 + 320 - 11 - 8 * v;
 #else
 	dest = conback->data + 320 - 43 + 320 * 186;
-	sprintf (ver, "%4.2f", VERSION);
+	v = sprintf (ver, "%4.2f", VERSION);
 #endif
 
-	for (x=0 ; x<strlen(ver) ; x++)
-		Draw_CharToConback (ver[x], dest+(x<<3));
+	for (x=0 ; x < v ; x++)
+		Draw_CharToConback (ver[x], dest + (x<<3));
 	
 // draw the pic
 	if (r_pixbytes == 1)
