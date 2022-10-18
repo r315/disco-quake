@@ -652,11 +652,14 @@ void Host_Loadgame_f (void)
 		for (i=0 ; i<sizeof(str)-1 ; i++)
 		{
 			r = fgetc (f);
-			if (r == EOF || !r)
+
+			if (r == EOF || r == '\0'){
 				break;
+			}
+
 			str[i] = r;
-			if (r == '}')
-			{
+			
+			if (r == '}'){
 				i++;
 				break;
 			}

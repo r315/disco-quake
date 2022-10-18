@@ -276,8 +276,8 @@ extern	cvar_t	m_side;
 extern	client_state_t	cl;
 
 // FIXME, allocate dynamically
+extern	entity_t		*cl_entities;
 extern	efrag_t			cl_efrags[MAX_EFRAGS];
-extern	entity_t		cl_entities[MAX_EDICTS];
 extern	entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 extern	lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 extern	dlight_t		cl_dlights[MAX_DLIGHTS];
@@ -303,6 +303,8 @@ void CL_Signon4 (void);
 void CL_Disconnect (void);
 void CL_Disconnect_f (void);
 void CL_NextDemo (void);
+
+void CL_Shutdown (void);
 
 #define			MAX_VISEDICTS	256
 extern	int				cl_numvisedicts;

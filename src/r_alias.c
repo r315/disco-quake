@@ -55,6 +55,9 @@ int				r_anumverts;
 
 float	aliastransform[3][4];
 
+extern finalvert_t		*finalverts;
+extern auxvert_t		*auxverts;
+
 typedef struct {
 	int	index0;
 	int	index1;
@@ -702,10 +705,6 @@ R_AliasDrawModel
 */
 void R_AliasDrawModel (alight_t *plighting)
 {
-	finalvert_t		finalverts[MAXALIASVERTS +
-						((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1];
-	auxvert_t		auxverts[MAXALIASVERTS];
-
 	r_amodels_drawn++;
 
 // cache align

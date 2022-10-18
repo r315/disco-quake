@@ -44,8 +44,8 @@ cvar_t	m_side = {"m_side","0.8", true};
 client_static_t	cls;
 client_state_t	cl;
 // FIXME: put these on hunk?
+entity_t		*cl_entities = NULL;
 efrag_t			cl_efrags[MAX_EFRAGS];
-entity_t		cl_entities[MAX_EDICTS];
 entity_t		cl_static_entities[MAX_STATIC_ENTITIES];
 lightstyle_t	cl_lightstyle[MAX_LIGHTSTYLES];
 dlight_t		cl_dlights[MAX_DLIGHTS];
@@ -73,7 +73,7 @@ void CL_ClearState (void)
 
 // clear other arrays	
 	memset (cl_efrags, 0, sizeof(cl_efrags));
-	memset (cl_entities, 0, sizeof(cl_entities));
+	memset (cl_entities, 0, MAX_EDICTS * sizeof(entity_t));
 	memset (cl_dlights, 0, sizeof(cl_dlights));
 	memset (cl_lightstyle, 0, sizeof(cl_lightstyle));
 	memset (cl_temp_entities, 0, sizeof(cl_temp_entities));
@@ -711,6 +711,16 @@ void CL_SendCmd (void)
 
 /*
 =================
+CL_Shutdown
+=================
+*/
+void CL_Shutdown(void)
+{
+	free(cl_entities);
+}
+
+/*
+=================
 CL_Init
 =================
 */
@@ -720,6 +730,10 @@ void CL_Init (void)
 
 	CL_InitInput ();
 	CL_InitTEnts ();
+
+	if(cl_entities == NULL){
+		cl_entities = (entity_t*)calloc(MAX_EDICTS, sizeof(entity_t));
+	}
 	
 //
 // register our commands

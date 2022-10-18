@@ -949,6 +949,9 @@ void Host_Shutdown(void)
 	S_Shutdown();
 	IN_Shutdown ();
 
+	R_Shutdown ();
+	CL_Shutdown ();
+
 	if (cls.state != ca_dedicated)
 	{
 		VID_Shutdown();

@@ -139,6 +139,11 @@ cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
 
 extern cvar_t	scr_fov;
 
+static edge_t	*ledges;
+static surf_t	*lsurfs;
+finalvert_t		*finalverts;
+auxvert_t		*auxverts;
+
 void CreatePassages (void);
 void SetVisibilityByPassages (void);
 
@@ -186,6 +191,31 @@ void R_Init (void)
 	
 // get stack position so we can guess if we are going to overflow
 	r_stack_start = (byte *)&dummy;
+
+	if(ledges == NULL){
+		ledges = (edge_t*)calloc(NUMSTACKEDGES +
+				((CACHE_SIZE - 1) / sizeof(edge_t)) + 1, 
+				sizeof(edge_t));
+	}
+
+	if(lsurfs == NULL){
+		lsurfs = (surf_t*)calloc(NUMSTACKSURFACES +
+				((CACHE_SIZE - 1) / sizeof(surf_t)) + 1,
+				sizeof(surf_t));
+	}
+
+	if(finalverts == NULL){
+		finalverts = (finalvert_t*)calloc(MAXALIASVERTS +
+				((CACHE_SIZE - 1) / sizeof(finalvert_t)) + 1, sizeof(finalvert_t));
+	}
+
+	if(auxverts == NULL){
+		auxverts = (auxvert_t*)calloc(MAXALIASVERTS, sizeof(MAXALIASVERTS));
+	}
+
+	if(ledges == NULL || lsurfs == NULL || finalverts == NULL || auxverts == NULL){
+		Sys_Error("%s: Fail to allocate memory\n", __func__);
+	}
 	
 	R_InitTurb ();
 	
@@ -875,11 +905,6 @@ R_EdgeDrawing
 */
 void R_EdgeDrawing (void)
 {
-	edge_t	ledges[NUMSTACKEDGES +
-				((CACHE_SIZE - 1) / sizeof(edge_t)) + 1];
-	surf_t	lsurfs[NUMSTACKSURFACES +
-				((CACHE_SIZE - 1) / sizeof(surf_t)) + 1];
-
 	if (auxedges)
 	{
 		r_edges = auxedges;
@@ -1083,3 +1108,15 @@ void R_InitTurb (void)
 	}
 }
 
+/*
+================
+R_Shutdown
+================
+*/
+void R_Shutdown (void)
+{
+	free(ledges);
+	free(lsurfs);
+	free(finalverts);
+	free(auxverts);
+}
