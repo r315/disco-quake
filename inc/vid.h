@@ -31,7 +31,7 @@ typedef struct vrect_s
 	struct vrect_s	*pnext;
 } vrect_t;
 
-typedef struct
+typedef struct viddef_s
 {
 	pixel_t			*buffer;		// invisible buffer
 	pixel_t			*colormap;		// 256 * VID_GRADES size
