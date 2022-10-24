@@ -792,7 +792,45 @@ void SCR_BringDownConsole (void)
 	VID_SetPalette (host_basepal);
 }
 
+void SCR_DrawFrameCount(void) {
+	int cx;
+	int cy = 10;
+	char data[20];
 
+	int len = sprintf(data, "%d", host_framecount);
+
+	cx = vid.width - (len * 8);
+
+	for (int i = 0; i < len; i++) {
+		Draw_Character(cx, cy, data[i]);
+		cx += 8;
+	}
+}
+
+
+void SCR_DrawFps(void) {
+	static float last_time = 0;
+	static int fps = 0, fps_count = 0;
+	int cx;
+	int cy = 0;
+	char data[20];
+
+	if ((Sys_FloatTime() - last_time) > 1.0f) {
+		last_time = Sys_FloatTime();
+		fps = fps_count;
+		fps_count = 0;
+	}
+	else {
+		fps_count++;
+	}
+
+	int len = sprintf(data, "%d", fps);
+	cx = vid.width - (len * 8);
+	for (int i = 0; i < len; i++) {
+		Draw_Character(cx, cy, data[i]);
+		cx += 8;
+	}
+}
 /*
 ==================
 SCR_UpdateScreen
@@ -931,6 +969,8 @@ void SCR_UpdateScreen (void)
 		SCR_DrawConsole ();
 		M_Draw ();
 	}
+
+	SCR_DrawFps();
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
