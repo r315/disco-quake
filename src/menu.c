@@ -2534,7 +2534,7 @@ int	startepisode;
 int	startlevel;
 int maxplayers;
 qboolean m_serverInfoMessage = false;
-double m_serverInfoMessageTime;
+float m_serverInfoMessageTime;
 
 void M_Menu_GameOptions_f (void)
 {
@@ -2844,7 +2844,7 @@ void M_GameOptions_Key (int key)
 /* SEARCH MENU */
 
 qboolean	searchComplete = false;
-double		searchCompleteTime;
+float		searchCompleteTime;
 
 void M_Menu_Search_f (void)
 {

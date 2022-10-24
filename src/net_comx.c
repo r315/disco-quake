@@ -153,7 +153,7 @@ typedef struct ComPort_s
 	char					shutdown[16];
 	char					buffer[128];
 	PollProcedure			poll;
-	double					timestamp;
+	float					timestamp;
 	byte					uartType;
 	byte					irq;
 	byte					baudBits;
@@ -576,7 +576,7 @@ static int CheckStatus (ComPort *p)
 
 static void Modem_Init(ComPort *p)
 {
-	double	start;
+	float	start;
 	char	*response;
 
 	Con_Printf ("Initializing modem...\n");
@@ -681,7 +681,7 @@ int TTY_Open(int serialPortNumber)
 void TTY_Close(int handle)
 {
 	ComPort	*p;
-	double		startTime;
+	float		startTime;
 
 	p = handleToPort [handle];
 
@@ -746,7 +746,7 @@ void TTY_Flush(int handle)
 
 int TTY_Connect(int handle, char *host)
 {
-	double	start;
+	float	start;
 	ComPort	*p;
 	char	*response = NULL;
 	keydest_t	save_key_dest;

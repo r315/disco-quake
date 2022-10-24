@@ -214,9 +214,9 @@ void Sys_Quit (void)
 	exit (0);
 }
 
-double Sys_FloatTime (void)
+float Sys_FloatTime (void)
 {
-	static double t;
+	static float t;
 	
 	t += 0.1;
 	

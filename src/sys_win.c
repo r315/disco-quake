@@ -37,9 +37,9 @@ int			starttime;
 qboolean	ActiveApp, Minimized;
 qboolean	WinNT;
 
-static double		pfreq;
-static double		curtime = 0.0;
-static double		lastcurtime = 0.0;
+static float		pfreq;
+static float		curtime = 0.0;
+static float		lastcurtime = 0.0;
 static int			lowshift;
 qboolean			isDedicated;
 static qboolean		sc_return_on_enter = false;
@@ -321,7 +321,7 @@ void Sys_Init (void)
 		highpart >>= 1;
 	}
 
-	pfreq = 1.0 / (double)lowpart;
+	pfreq = 1.0 / (float)lowpart;
 
 	Sys_InitFloatTime ();
 
@@ -351,7 +351,7 @@ void Sys_Error (char *error, ...)
 	char		*text4 = "***********************************\n";
 	char		*text5 = "\n";
 	DWORD		dummy;
-	double		starttime;
+	float		starttime;
 	static int	in_sys_error0 = 0;
 	static int	in_sys_error1 = 0;
 	static int	in_sys_error2 = 0;
@@ -402,7 +402,7 @@ void Sys_Error (char *error, ...)
 		}
 		else
 		{
-			MessageBox(NULL, text, "Double Quake Error",
+			MessageBox(NULL, text, "float Quake Error",
 					   MB_OK | MB_SETFOREGROUND | MB_ICONSTOP);
 		}
 	}
@@ -464,14 +464,14 @@ void Sys_Quit (void)
 Sys_FloatTime
 ================
 */
-double Sys_FloatTime (void)
+float Sys_FloatTime (void)
 {
 	static int			sametimecount;
 	static unsigned int	oldtime;
 	static int			first = 1;
 	LARGE_INTEGER		PerformanceCount;
 	unsigned int		temp, t2;
-	double				time;
+	float				time;
 
 	Sys_PushFPCW_SetHigh ();
 
@@ -496,7 +496,7 @@ double Sys_FloatTime (void)
 		{
 			t2 = temp - oldtime;
 
-			time = (double)t2 * pfreq;
+			time = (float)t2 * pfreq;
 			oldtime = temp;
 
 			curtime += time;
@@ -541,7 +541,7 @@ void Sys_InitFloatTime (void)
 
 	if (j)
 	{
-		curtime = (double) (Q_atof(com_argv[j+1]));
+		curtime = (float) (Q_atof(com_argv[j+1]));
 	}
 	else
 	{
@@ -693,7 +693,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 {
     MSG				msg;
 	quakeparms_t	parms;
-	double			time, oldtime, newtime;
+	float			time, oldtime, newtime;
 	MEMORYSTATUS	lpBuffer;
 	static	char	cwd[1024];
 	int				t;

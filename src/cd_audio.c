@@ -740,7 +740,7 @@ void CDAudio_Update(void)
 {
 	int		ret;
 	int		newVolume;
-	static	double lastUpdate;
+	static	float lastUpdate;
 
 	if (!initialized || !enabled)
 		return;
@@ -751,7 +751,7 @@ void CDAudio_Update(void)
 
 	if (mediaCheck)
 	{
-		static	double lastCheck;
+		static	float lastCheck;
 
 		if ((realtime - lastCheck) < 5.0)
 			return;

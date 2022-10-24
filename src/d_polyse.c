@@ -490,7 +490,7 @@ D_PolysetSetUpForLineScan
 void D_PolysetSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 		fixed8_t endvertu, fixed8_t endvertv)
 {
-	double		dm, dn;
+	float		dm, dn;
 	int			tm, tn;
 	adivtab_t	*ptemp;
 
@@ -511,8 +511,8 @@ void D_PolysetSetUpForLineScan(fixed8_t startvertu, fixed8_t startvertv,
 	}
 	else
 	{
-		dm = (double)tm;
-		dn = (double)tn;
+		dm = (float)tm;
+		dn = (float)tn;
 
 		FloorDivMod (dm, dn, &ubasestep, &erroradjustup);
 

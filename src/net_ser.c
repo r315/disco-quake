@@ -79,7 +79,7 @@ typedef struct SerialLine_s
 	qboolean			connected;
 	qboolean			connecting;
 	qboolean			client;
-	double				connect_time;
+	float				connect_time;
 	unsigned short		crcStated;
 	unsigned short		crcValue;
 	byte				currState;
@@ -764,8 +764,8 @@ void Serial_SearchForHosts (qboolean xmit)
 static qsocket_t *_Serial_Connect (char *host, SerialLine *p)
 {
 	int		ret;
-	double	start_time;
-	double	last_time;
+	float	start_time;
+	float	last_time;
 
 	p->client = true;
 	if (TTY_Connect(p->tty, host))

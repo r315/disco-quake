@@ -186,9 +186,9 @@ void Sys_Quit (void)
 	exit (0);
 }
 
-double Sys_FloatTime (void)
+float Sys_FloatTime (void)
 {
-	double t;
+	float t;
     struct _timeb tstruct;
 	static int	starttime;
 
@@ -271,7 +271,7 @@ int main (int argc, char **argv)
 {
     MSG        msg;
 	quakeparms_t	parms;
-	double			time, oldtime;
+	float			time, oldtime;
 	static	char	cwd[1024];
 
 	memset (&parms, 0, sizeof(parms));
