@@ -1142,7 +1142,7 @@ Mod_LoadBrushModel
 */
 void Mod_LoadBrushModel (model_t *mod, void *buffer)
 {
-	int			i, j;
+	short		i, j;
 	dheader_t	*header;
 	dmodel_t 	*bm;
 	

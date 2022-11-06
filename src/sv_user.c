@@ -129,7 +129,7 @@ void SV_UserFriction (void)
 	
 	vel = velocity;
 	
-	speed = sqrt(vel[0]*vel[0] +vel[1]*vel[1]);
+	speed = sqrtf (vel[0]*vel[0] +vel[1]*vel[1]);
 	if (!speed)
 		return;
 

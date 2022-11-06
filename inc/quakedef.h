@@ -225,7 +225,7 @@ void	VID_UnlockBuffer (void);
 #include "zone.h"
 #include "mathlib.h"
 
-typedef struct
+typedef struct entity_state_s
 {
 	vec3_t	origin;
 	vec3_t	angles;
@@ -277,7 +277,7 @@ typedef struct
 // command line parms passed to the program, and the amount of memory
 // available for the program to use
 
-typedef struct
+typedef struct quakeparms_s
 {
 	char	*basedir;
 	char	*cachedir;		// for development over ISDN lines
