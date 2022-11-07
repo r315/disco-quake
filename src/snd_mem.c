@@ -199,19 +199,21 @@ static byte *FindChunk(char *name, byte *start, byte *end)
 	}
 }
 
-void DumpChunks(byte *ptr, byte *start, byte *end)
+void DumpChunks(byte *start, byte *end)
 {
-	int  iff_chunk_len;
 	char	str[5];
+	byte	*ptr;
+	int		chunk_len;
+	
 	str[4] = 0;
-
+	ptr = start;
 	do
 	{
 		memcpy (str, ptr, 4);
 		ptr += 4;
-		ptr = GetLittleLong(ptr, &iff_chunk_len);
-		Con_Printf ("0x%x : %s (%d)\n", (int)(ptr - 4), str, iff_chunk_len);
-		ptr += (iff_chunk_len + 1) & ~1;
+		ptr = GetLittleLong(ptr, &chunk_len);
+		Con_Printf ("0x%x : %s (%d)\n", (int)(ptr - 4), str, chunk_len);
+		ptr += (chunk_len + 1) & ~1;
 	} while (ptr < end);
 }
 
@@ -224,18 +226,19 @@ wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
 {
 	wavinfo_t	info;
 	short		format;
-	int		samples;
-	byte	*data_p, *iff_end;
+	int         samples;
+	byte        *data_p, *iff_data, *iff_end;
 
 	memset (&info, 0, sizeof(info));
 
 	if (!wavdata)
 		return info;
 		
+	iff_data = wavdata;
 	iff_end = wavdata + wavlength;
 
-	// find "RIFF" chunk
-	data_p = FindChunk("RIFF", wavdata, iff_end);
+    // find "RIFF" chunk
+	data_p = FindChunk("RIFF", iff_data, iff_end);
 	if (!(data_p && !Q_strncmp(data_p + 8, "WAVE", 4)))
 	{
 		Con_Printf("Missing RIFF/WAVE chunks\n");
@@ -243,10 +246,10 @@ wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
 	}
 
 // get "fmt " chunk
-	wavdata = data_p + 12;
-// DumpChunks ();
+	iff_data = data_p + 12;
+// DumpChunks (iff_data, iff_end);
 
-	data_p = FindChunk("fmt ", wavdata, iff_end);
+	data_p = FindChunk("fmt ", iff_data, iff_end);
 	if (!data_p)
 	{
 		Con_Printf("Missing fmt chunk\n");
@@ -268,7 +271,7 @@ wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
 	info.width /= 8;
 
 // get cue chunk
-	data_p = FindChunk("cue ", wavdata, iff_end);
+	data_p = FindChunk("cue ", iff_data, iff_end);
 	if (data_p)
 	{
 		data_p += 32;
@@ -279,7 +282,6 @@ wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
 		data_p = FindChunk ("LIST", data_p, iff_end);
 		if (data_p)
 		{
-
 			if (!Q_strncmp(data_p + 28, "mark", 4))
 			{	// this is not a proper parse, but it works with cooledit...
 				data_p += 24;
@@ -293,7 +295,7 @@ wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
 		info.loopstart = -1;
 
 // find data chunk
-	data_p = FindChunk("data", wavdata, iff_end);
+	data_p = FindChunk("data", iff_data, iff_end);
 	if (!data_p)
 	{
 		Con_Printf("Missing data chunk\n");
