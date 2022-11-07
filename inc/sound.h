@@ -108,12 +108,6 @@ void S_EndPrecaching (void);
 void S_PaintChannels(int endtime);
 void S_InitPaintChannels (void);
 
-// picks a channel based on priorities, empty slots, number of channels
-channel_t *SND_PickChannel(int entnum, int entchannel);
-
-// spatializes a channel
-void SND_Spatialize(channel_t *ch);
-
 // initializes cycling through a DMA buffer and returns information on it
 qboolean SNDDMA_Init(void);
 
@@ -153,7 +147,6 @@ extern vec3_t listener_right;
 extern vec3_t listener_up;
 extern volatile dma_t *shm;
 extern volatile dma_t sn;
-extern vec_t sound_nominal_clip_dist;
 
 extern	cvar_t loadas8bit;
 extern	cvar_t bgmvolume;

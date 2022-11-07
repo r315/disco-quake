@@ -276,7 +276,7 @@ S_FindName
 
 ==================
 */
-sfx_t *S_FindName (char *name)
+static sfx_t *S_FindName (char *name)
 {
 	int		i;
 	sfx_t	*sfx;
@@ -353,7 +353,7 @@ sfx_t *S_PrecacheSound (char *name)
 SND_PickChannel
 =================
 */
-channel_t *SND_PickChannel(int entnum, int entchannel)
+static channel_t *SND_PickChannel(int entnum, int entchannel)
 {
     int ch_idx;
     int first_to_die;
@@ -397,13 +397,12 @@ channel_t *SND_PickChannel(int entnum, int entchannel)
 SND_Spatialize
 =================
 */
-void SND_Spatialize(channel_t *ch)
+static void SND_Spatialize(channel_t *ch)
 {
     vec_t dot;
-    vec_t ldist, rdist, dist;
+    vec_t dist;
     vec_t lscale, rscale, scale;
-    vec3_t source_vec;
-	sfx_t *snd;
+    vec3_t source_vec;	
 
 // anything coming from the view entity will allways be full volume
 	if (ch->entnum == cl.viewentity)
@@ -415,7 +414,6 @@ void SND_Spatialize(channel_t *ch)
 
 // calculate stereo seperation and distance attenuation
 
-	snd = ch->sfx;
 	VectorSubtract(ch->origin, listener_origin, source_vec);
 	
 	dist = VectorNormalize(source_vec) * ch->dist_mult;
@@ -809,7 +807,8 @@ void S_Update(vec3_t origin, vec3_t forward, vec3_t right, vec3_t up)
 	S_Update_();
 }
 
-void GetSoundtime(void)
+#ifndef SDL
+static void GetSoundtime(void)
 {
 	int		samplepos;
 	static	int		buffers;
@@ -842,6 +841,7 @@ void GetSoundtime(void)
 	soundtime = buffers*fullsamples + samplepos/shm->channels;
 #endif
 }
+#endif
 
 void S_ExtraUpdate (void)
 {
