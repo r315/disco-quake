@@ -11,6 +11,7 @@ $(REPO_F769)/Drivers/STM32F7xx_HAL_Driver/Src \
 $(REPO_F769)/Drivers/BSP/STM32F769I-Discovery \
 $(REPO_F769)/Drivers/BSP/Components/otm8009a \
 $(REPO_F769)/Drivers/BSP/Components/ft6x06 \
+$(REPO_F769)/Drivers/BSP/Components/wm8994 \
 $(REPO_F769)/Middlewares/Third_Party/FatFs/src \
 
 BSP_INCLUDE = \
@@ -19,6 +20,7 @@ $(REPO_F769)/Drivers/STM32F7xx_HAL_Driver/Inc \
 $(REPO_F769)/Drivers/BSP/STM32F769I-Discovery \
 $(REPO_F769)/Drivers/BSP/Components/Common \
 $(REPO_F769)/Drivers/BSP/Components/otm8009a \
+$(REPO_F769)/Drivers/BSP/Components/wm8994 \
 $(REPO_F769)/Drivers/CMSIS/Device/ST/STM32F7xx/Include \
 $(REPO_F769)/Drivers/CMSIS/Include \
 $(REPO_F769)/Middlewares/Third_Party/FatFs/src \
@@ -116,6 +118,7 @@ stm32f7xx_hal_sdram.c \
 stm32f7xx_hal_sd.c \
 stm32f7xx_hal_i2c.c \
 stm32f7xx_hal_uart.c \
+stm32f7xx_hal_sai.c \
 stm32f7xx_ll_fmc.c \
 stm32f7xx_ll_sdmmc.c \
 stm32f769i_discovery.c \
@@ -128,6 +131,7 @@ ff.c \
 ff_gen_drv.c \
 otm8009a.c \
 ft6x06.c \
+wm8994.c \
 
 ASOURCES =startup_stm32f769nihx.s
 
