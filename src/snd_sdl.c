@@ -10,6 +10,18 @@ static int snd_inited;
 extern int desired_speed;
 extern int desired_bits;
 
+int gSndBufSize = (64 * 1024);
+void *pDSBuf = NULL;
+
+void IN_Accumulate (void)
+{
+
+}
+
+void SNDDMA_Submit(void)
+{
+}
+
 static void paint_audio(void *unused, Uint8 *stream, int len)
 {
 	if ( shm ) {
