@@ -151,9 +151,6 @@ extern volatile dma_t sn;
 extern	cvar_t loadas8bit;
 extern	cvar_t bgmvolume;
 extern	cvar_t volume;
-
-extern qboolean	snd_initialized;
-
 extern int		snd_blocked;
 
 void S_LocalSound (char *s);

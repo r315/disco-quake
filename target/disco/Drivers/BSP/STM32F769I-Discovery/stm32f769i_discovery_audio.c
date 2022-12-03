@@ -324,14 +324,14 @@ uint8_t BSP_AUDIO_OUT_Init(uint16_t OutputDevice, uint8_t Volume, uint32_t Audio
   SAIx_Out_Init(AudioFreq);
 
   /* wm8994 codec initialization */
-  deviceid = wm8994_drv.ReadID(AUDIO_I2C_ADDRESS);
+  deviceid = AUDIO_Get_Driver()->ReadID(AUDIO_I2C_ADDRESS);
   
   if((deviceid) == WM8994_ID)
-  {  
+  {
+    audio_drv = AUDIO_Get_Driver();
     /* Reset the Codec Registers */
-    wm8994_drv.Reset(AUDIO_I2C_ADDRESS);
+    audio_drv->Reset(AUDIO_I2C_ADDRESS);
     /* Initialize the audio driver structure */
-    audio_drv = &wm8994_drv; 
     ret = AUDIO_OK;
   }
   else
@@ -1172,12 +1172,12 @@ uint8_t BSP_AUDIO_IN_InitEx(uint16_t InputDevice, uint32_t AudioFreq, uint32_t B
 
     SAIx_In_Init(AudioFreq);
     
-    if((wm8994_drv.ReadID(AUDIO_I2C_ADDRESS)) == WM8994_ID)
+    if((AUDIO_Get_Driver()->ReadID(AUDIO_I2C_ADDRESS)) == WM8994_ID)
     {
+      audio_drv = AUDIO_Get_Driver();
       /* Reset the Codec Registers */
-      wm8994_drv.Reset(AUDIO_I2C_ADDRESS);
+      audio_drv->Reset(AUDIO_I2C_ADDRESS);
       /* Initialize the audio driver structure */
-      audio_drv = &wm8994_drv;
       ret = AUDIO_OK;
     }
     else

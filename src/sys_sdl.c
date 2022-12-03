@@ -7,7 +7,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#ifndef __WIN32__
+#ifdef _WIN32
 #include <sys/stat.h>
 #include <signal.h>
 #include <time.h>
