@@ -120,7 +120,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	info = GetWavinfo (s->name, data, com_filesize);
+	info = SND_GetWavinfo (s->name, data, com_filesize);
 	if (info.channels != 1)
 	{
 		Con_Printf ("%s is a stereo sample\n",s->name);
@@ -219,10 +219,10 @@ void DumpChunks(byte *start, byte *end)
 
 /*
 ============
-GetWavinfo
+SND_GetWavinfo
 ============
 */
-wavinfo_t GetWavinfo (char *name, byte *wavdata, int wavlength)
+wavinfo_t SND_GetWavinfo (char *name, byte *wavdata, int wavlength)
 {
 	wavinfo_t	info;
 	short		format;

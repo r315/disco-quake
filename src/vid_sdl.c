@@ -57,8 +57,6 @@ void    VID_Init (unsigned char *palette)
     int pnum, chunk;
     byte *cache;
     int cachesize;
-    Uint8 video_bpp;
-    Uint16 video_w, video_h;
     Uint32 flags;
 
     // Load the SDL library

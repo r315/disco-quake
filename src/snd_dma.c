@@ -40,13 +40,12 @@ static qboolean snd_initialized = false;
 
 // pointer should go away
 volatile dma_t  *shm = 0;
-volatile dma_t  sn;
 
-vec3_t		listener_origin;
-vec3_t		listener_forward;
-vec3_t		listener_right;
-vec3_t		listener_up;
-vec_t		sound_nominal_clip_dist=1000.0;
+static vec3_t		listener_origin;
+static vec3_t		listener_forward;
+static vec3_t		listener_right;
+static vec3_t		listener_up;
+static vec_t		sound_nominal_clip_dist = 1000.0;
 
 int			soundtime;		// sample PAIRS
 int   		paintedtime; 	// sample PAIRS
