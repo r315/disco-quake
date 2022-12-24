@@ -1095,23 +1095,23 @@ void M_AdjustSliders (int dir)
 		break;
 	case 6:	// music volume
 #ifdef _WIN32
-		bgmvolume.value += dir * 1.0;
+		snd_bgmvolume.value += dir * 1.0;
 #else
-		bgmvolume.value += dir * 0.1;
+		snd_bgmvolume.value += dir * 0.1;
 #endif
-		if (bgmvolume.value < 0)
-			bgmvolume.value = 0;
-		if (bgmvolume.value > 1)
-			bgmvolume.value = 1;
-		Cvar_SetValue ("bgmvolume", bgmvolume.value);
+		if (snd_bgmvolume.value < 0)
+			snd_bgmvolume.value = 0;
+		if (snd_bgmvolume.value > 1)
+			snd_bgmvolume.value = 1;
+		Cvar_SetValue ("bgmvolume", snd_bgmvolume.value);
 		break;
 	case 7:	// sfx volume
-		volume.value += dir * 0.1;
-		if (volume.value < 0)
-			volume.value = 0;
-		if (volume.value > 1)
-			volume.value = 1;
-		Cvar_SetValue ("volume", volume.value);
+		snd_volume.value += dir * 0.1;
+		if (snd_volume.value < 0)
+			snd_volume.value = 0;
+		if (snd_volume.value > 1)
+			snd_volume.value = 1;
+		Cvar_SetValue ("volume", snd_volume.value);
 		break;
 
 	case 8:	// allways run
@@ -1203,11 +1203,11 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 72, r);
 
 	M_Print (16, 80, "       CD Music Volume");
-	r = bgmvolume.value;
+	r = snd_bgmvolume.value;
 	M_DrawSlider (220, 80, r);
 
 	M_Print (16, 88, "          Sound Volume");
-	r = volume.value;
+	r = snd_volume.value;
 	M_DrawSlider (220, 88, r);
 
 	M_Print (16, 96,  "            Always Run");

@@ -7,16 +7,14 @@
 static dma_t the_shm;
 static int snd_inited;
 
-extern int desired_speed;
-extern int desired_bits;
+static int desired_speed = 11025;
+static int desired_bits = 16;
+static int desired_channels = 2;
+static int desired_samples = 512;
 
 int gSndBufSize = (64 * 1024);
 void *pDSBuf = NULL;
 
-void IN_Accumulate (void)
-{
-
-}
 
 void SNDDMA_Submit(void)
 {
@@ -24,11 +22,9 @@ void SNDDMA_Submit(void)
 
 static void paint_audio(void *unused, Uint8 *stream, int len)
 {
-	if ( shm ) {
-		shm->buffer = stream;
-		shm->samplepos += len/(shm->samplebits/8)/2;
-		// Check for samplepos overflow?
-		S_PaintChannels (shm->samplepos);
+	if (snd_shm ) {
+		snd_shm->buffer = stream;
+		snd_shm->samplepos += len / (snd_shm->samplebits / 8) / snd_shm->channels;
 	}
 }
 
@@ -55,8 +51,9 @@ qboolean SNDDMA_Init(void)
 								desired_bits);
 			return 0;
 	}
-	desired.channels = 2;
-	desired.samples = 512;
+
+	desired.channels = desired_channels;
+	desired.samples = desired_samples;
 	desired.callback = paint_audio;
 
 	/* Open the audio device */
@@ -94,15 +91,15 @@ qboolean SNDDMA_Init(void)
 	SDL_PauseAudio(0);
 
 	/* Fill the audio DMA information block */
-	shm = &the_shm;
-	shm->splitbuffer = 0;
-	shm->samplebits = (obtained.format & 0xFF);
-	shm->speed = obtained.freq;
-	shm->channels = obtained.channels;
-	shm->samples = obtained.samples*shm->channels;
-	shm->samplepos = 0;
-	shm->submission_chunk = 1;
-	shm->buffer = NULL;
+	snd_shm = &the_shm;
+	snd_shm->splitbuffer = 0;
+	snd_shm->samplebits = (obtained.format & 0xFF);
+	snd_shm->speed = obtained.freq;
+	snd_shm->channels = obtained.channels;
+	snd_shm->samples = obtained.samples*snd_shm->channels;
+	snd_shm->samplepos = 0;
+	snd_shm->submission_chunk = 1;
+	snd_shm->buffer = NULL;
 
 	snd_inited = 1;
 	return 1;
@@ -110,7 +107,7 @@ qboolean SNDDMA_Init(void)
 
 int SNDDMA_GetDMAPos(void)
 {
-	return shm->samplepos;
+	return snd_shm->samplepos;
 }
 
 void SNDDMA_Shutdown(void)

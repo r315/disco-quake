@@ -39,15 +39,15 @@ void ResampleSfx (sfx_t *sfx, int inrate, int inwidth, byte *data)
 	if (!sc)
 		return;
 
-	stepscale = (float)inrate / shm->speed;	// this is usually 0.5, 1, or 2
+	stepscale = (float)inrate / snd_shm->speed;	// this is usually 0.5, 1, or 2
 
 	outcount = sc->length / stepscale;
 	sc->length = outcount;
 	if (sc->loopstart != -1)
 		sc->loopstart = sc->loopstart / stepscale;
 
-	sc->speed = shm->speed;
-	if (loadas8bit.value)
+	sc->speed = snd_shm->speed;
+	if (snd_loadas8bit.value)
 		sc->width = 1;
 	else
 		sc->width = inwidth;
@@ -127,7 +127,7 @@ sfxcache_t *S_LoadSound (sfx_t *s)
 		return NULL;
 	}
 
-	stepscale = (float)info.rate / shm->speed;	
+	stepscale = (float)info.rate / snd_shm->speed;
 	len = info.samples / stepscale;
 
 	len = len * info.width * info.channels;
@@ -158,13 +158,13 @@ WAV loading
 */
 static byte *GetLittleShort(byte *ptr, short *val)
 {
-	*val = (ptr[1]<<8) | ptr[0];
+	*val = *(short*)ptr;
 	return ptr + 2;
 }
 
 static byte *GetLittleLong(byte *ptr, int *val)
 {
-	*val = (ptr[3]<<24) | (ptr[2]<<16) | (ptr[1]<<8) | ptr[0];
+	*val = *(int*)ptr;
 	return ptr + 4;
 }
 

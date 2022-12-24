@@ -103,7 +103,6 @@ void S_Init(void);
 void S_InitPaintChannels(void);
 sfxcache_t *S_LoadSound(sfx_t *s);
 void S_LocalSound(char *s);
-void S_PaintChannels(int endtime);
 sfx_t *S_PrecacheSound(char *sample);
 void S_Shutdown(void);
 void S_Startup(void);
@@ -124,24 +123,23 @@ void SNDDMA_Shutdown(void);
 void SNDDMA_Submit(void);
 
 wavinfo_t SND_GetWavinfo(char *name, byte *wav, int wavlength);
-void SND_InitScaletable(void);
+void S_MIX_InitScaletable(void);
+void S_MIX_PaintChannels(int endtime);
 
 // ====================================================================
 // User-setable variables
 // ====================================================================
 
-extern channel_t channels[MAX_CHANNELS];
+extern channel_t snd_channels[MAX_CHANNELS];
 // 0 to MAX_DYNAMIC_CHANNELS-1	= normal entity sounds
 // MAX_DYNAMIC_CHANNELS to MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS -1 = water, etc
 // MAX_DYNAMIC_CHANNELS + NUM_AMBIENTS to total_channels = static sounds
 
-extern int total_channels;
-extern int paintedtime;
+extern int snd_total_channels;
+extern int snd_paintedtime;
+extern dma_t *snd_shm;
 
-extern volatile dma_t *shm;
-
-extern cvar_t loadas8bit;
-extern cvar_t bgmvolume;
-extern cvar_t volume;
-extern int snd_blocked;     // Only for snd_win.c
+extern cvar_t snd_loadas8bit;
+extern cvar_t snd_bgmvolume;
+extern cvar_t snd_volume;
 #endif
