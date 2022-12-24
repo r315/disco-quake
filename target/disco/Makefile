@@ -79,6 +79,7 @@ r_surf.c \
 r_vars.c \
 sbar.c \
 screen.c \
+snd_mix.c \
 sv_main.c \
 sv_move.c \
 sv_phys.c \
@@ -102,6 +103,7 @@ syscalls.c \
 fifo.c \
 disco_main.c \
 disco_serial.c \
+disco_audio.c \
 system_stm32f7xx.c \
 stm32f7xx_hal.c \
 stm32f7xx_hal_cortex.c \
@@ -126,6 +128,7 @@ stm32f769i_discovery_lcd.c \
 stm32f769i_discovery_ts.c \
 stm32f769i_discovery_sdram.c \
 stm32f769i_discovery_sd.c \
+stm32f769i_discovery_audio.c \
 diskio.c \
 ff.c \
 ff_gen_drv.c \

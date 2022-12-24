@@ -43,6 +43,8 @@
 #define SD_DEFAULT_BLOCK_SIZE 512
 #define ENABLE_SD_DMA_CACHE_MAINTENANCE 0
 
+#define DISCO_SD_USE_DMA    0
+
 /* Private variables ---------------------------------------------------------*/
 /*
 * Some DMA requires 4-Byte aligned address buffer to correctly read/wite data,
@@ -126,8 +128,8 @@ static void sd_error(void){
 
 /**
   * @brief  Initializes a Drive
-  * @param  lun : not used
-  * @retval DSTATUS: Operation status
+  * @param  timeout : timeout value in ms
+  * @retval int: Operation status
   */
 static int SD_CheckStatusWithTimeout(uint32_t timeout)
 {
@@ -219,6 +221,7 @@ DSTATUS SD_status(BYTE lun)
 DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 {
     DRESULT res = RES_ERROR;
+#if !DISCO_SD_USE_DMA    
     /* Blocking  */
     for (uint32_t i = 0; i < count; i++){
         do{
@@ -233,6 +236,38 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
             *buff = scratch[i];
         }
     }
+#else
+    if (SD_CheckStatusWithTimeout(SD_TIMEOUT) < 0) {
+        return res;
+    }
+
+    for (int i = 0; i < count; i++) {
+        res = BSP_SD_ReadBlocks_DMA((uint32_t*)scratch, (uint32_t)sector++, 1);
+        if (res == MSD_OK) {
+            /* wait until the read is successful or a timeout occurs */
+            int timeout = HAL_GetTick();
+            while((ReadStatus == 0) && ((HAL_GetTick() - timeout) < SD_TIMEOUT)) { }
+            if (ReadStatus == 0)
+            {
+                res = RES_ERROR;
+                break;
+            }
+            ReadStatus = 0;
+
+#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
+          /*
+          *
+          * invalidate the scratch buffer before the next read to get the actual data instead of the cached one
+          */
+          SCB_InvalidateDCache_by_Addr((uint32_t*)scratch, BLOCKSIZE);
+#endif
+            memcpy(buff, scratch, BLOCKSIZE);
+            buff += BLOCKSIZE;
+        } else {
+          break;
+        }
+    }
+#endif
     return res;
 }
 
@@ -400,4 +435,12 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
     return res;
 }
 
+#if DISCO_SD_USE_DMA
+void DMA2_Stream0_IRQHandler(void){
+    HAL_DMA_IRQHandler(uSdHandle.hdmarx);
+}
 
+void DMA2_Stream5_IRQHandler(void){
+    HAL_DMA_IRQHandler(uSdHandle.hdmatx);
+}
+#endif

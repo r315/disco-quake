@@ -144,7 +144,9 @@ void HAL_MspInit(void)
 {
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_RCC_SYSCFG_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 }
+
 
 void SysTick_Handler(void)
 {
@@ -163,12 +165,34 @@ void EXTI0_IRQHandler (void)
         __HAL_GPIO_EXTI_CLEAR_IT(GPIO_PIN_0);
     }
 }
+
 /*
 void LTDC_IRQHandler(void)
 {
 	HAL_LTDC_IRQHandler(&hltdc_discovery);
 }
 */ 
+void MemManage_Handler(void){
+    __asm volatile(
+        "bkpt #01 \n"
+        "b . \n"
+    );   
+}
+
+void BusFault_Handler(void){
+    __asm volatile(
+        "bkpt #01 \n"
+        "b . \n"
+    );   
+}
+
+void UsageFault_Handler(void){
+    __asm volatile(
+        "bkpt #01 \n"
+        "b . \n"
+    );   
+}
+
 void Stack_Dump(stackframe_t *stack){
     GPIOJ->MODER = (1 << 26);
     HAL_GPIO_WritePin(GPIOJ, GPIO_PIN_13, GPIO_PIN_SET);

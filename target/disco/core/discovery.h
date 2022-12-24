@@ -391,6 +391,16 @@ typedef struct lcdarea_s {
     void *data;
 }lcdarea_t;
 
+typedef struct discoaudio_s{
+    uint32_t freq;      // sample rate
+    uint32_t channels;  // 
+    uint32_t format;    // 8, 16, 32bit samples
+    void *buf;          // samples buffer
+    uint32_t size;      // Number of samples
+    uint8_t volume;     // Codec volume
+    void (*callback)(void *stream, uint32_t len);
+}discoaudio_t;
+
 int sysmem_used(void);
 int sysmem_free(void);
 int sysmem_total(void);
@@ -399,6 +409,9 @@ void LCD_DrawBitmap (int x, int y, uint8_t *pbmp);
 lcdarea_t *LCD_GetBmpData(uint8_t *pbmp, uint8_t argb);
 lcdarea_t *LCD_LoadBmp(const char *filename, uint8_t argb);
 void LCD_BlendWindow(lcdarea_t *fg, uint32_t fg_offset, lcdarea_t *bg, uint32_t bg_offset, uint16_t x, uint16_t y, uint16_t w, uint16_t h);
+
+void DISCO_Audio_Init(discoaudio_t *spec);
+void DISCO_Audio_Test(void);
 
 #ifdef __cplusplus
 }
