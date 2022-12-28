@@ -22,46 +22,58 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
+typedef struct pcx_s
+{
+    char	manufacturer;
+    char	version;
+    char	encoding;
+    char	bits_per_pixel;
+    unsigned short	xmin,ymin,xmax,ymax;
+    unsigned short	hres,vres;
+    unsigned char	palette[48];
+    char	reserved;
+    char	color_planes;
+    unsigned short	bytes_per_line;
+    unsigned short	palette_type;
+    char	filler[58];
+    unsigned char	data;			// unbounded
+} pcx_t;
+
 // only the refresh window will be updated unless these variables are flagged 
-int			scr_copytop;
-int			scr_copyeverything;
+qboolean			scr_copytop;
+qboolean			scr_copyeverything;
 
-float		scr_con_current;
-float		scr_conlines;		// lines of console to display
+int					scr_con_current;
+static int			scr_conlines;		// lines of console to display
+static float		oldscreensize, oldfov;
+static qboolean		scr_initialized;	// ready to draw
 
-float		oldscreensize, oldfov;
-cvar_t		scr_viewsize = {"viewsize","100", true};
-cvar_t		scr_fov = {"fov","90"};	// 10 - 170
-cvar_t		scr_conspeed = {"scr_conspeed","300"};
-cvar_t		scr_centertime = {"scr_centertime","2"};
-cvar_t		scr_showram = {"showram","1"};
-cvar_t		scr_showturtle = {"showturtle","0"};
-cvar_t		scr_showpause = {"showpause","1"};
-cvar_t		scr_printspeed = {"scr_printspeed","8"};
+cvar_t				scr_viewsize	= {"viewsize","100", true};
+cvar_t				scr_fov			= {"fov","90"};	// 10 - 170
+cvar_t				scr_centertime	= {"scr_centertime","2"};
+static cvar_t		scr_conspeed	= {"scr_conspeed","300"};
+static cvar_t		scr_showram		= {"showram","1"};
+static cvar_t		scr_showturtle	= {"showturtle","0"};
+static cvar_t		scr_showpause	= {"showpause","1"};
+static cvar_t		scr_printspeed	= {"scr_printspeed","8"};
+static cvar_t		scr_showfps 	= { "showfps","1" };
 
-qboolean	scr_initialized;		// ready to draw
+static qpic_t		*scr_ram;
+static qpic_t		*scr_net;
+static qpic_t		*scr_turtle;
 
-qpic_t		*scr_ram;
-qpic_t		*scr_net;
-qpic_t		*scr_turtle;
-
-int			scr_fullupdate;
-
-int			clearconsole;
-int			clearnotify;
+int					scr_fullupdate;
+int					scr_clearnotify;
+static int			clearconsole;
 
 
-vrect_t		*pconupdate;
-vrect_t		scr_vrect;
+vrect_t				scr_vrect;
 
-qboolean	scr_disabled_for_loading;
-qboolean	scr_drawloading;
-float		scr_disabled_time;
-qboolean	scr_skipupdate;
-
-qboolean	block_drawing;
-
-void SCR_ScreenShot_f (void);
+qboolean			scr_disabled_for_loading;
+static qboolean		scr_drawloading;
+static float		scr_disabled_time;
+qboolean			scr_skipupdate;
+qboolean			scr_block_drawing;
 
 /*
 ===============================================================================
@@ -71,12 +83,17 @@ CENTER PRINTING
 ===============================================================================
 */
 
-char		scr_centerstring[1024];
-float		scr_centertime_start;	// for slow victory printing
-float		scr_centertime_off;
-int			scr_center_lines;
-int			scr_erase_lines;
-int			scr_erase_center;
+float			scr_centertime_off;
+static char		scr_centerstring[1024];
+static float	scr_centertime_start;	// for slow victory printing
+static int		scr_center_lines;
+static int		scr_erase_lines;
+static int		scr_erase_center;
+
+static char		*scr_notifystring;
+static qboolean	scr_drawdialog;
+
+void SCR_ScreenShot_f (void);
 
 /*
 ==============
@@ -117,7 +134,7 @@ void SCR_EraseCenterString (void)
 	else
 		y = 48;
 
-	scr_copytop = 1;
+	scr_copytop = true;
 	Draw_TileClear (0, y,vid.width, 8*scr_erase_lines);
 }
 
@@ -170,7 +187,7 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	scr_copytop = 1;
+	scr_copytop = true;
 	if (scr_center_lines > scr_erase_lines)
 		scr_erase_lines = scr_center_lines;
 
@@ -320,6 +337,7 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&scr_showpause);
 	Cvar_RegisterVariable (&scr_centertime);
 	Cvar_RegisterVariable (&scr_printspeed);
+	Cvar_RegisterVariable (&scr_showfps);
 
 //
 // register our commands
@@ -478,13 +496,13 @@ void SCR_SetUpToDrawConsole (void)
 
 	if (clearconsole++ < vid.numpages)
 	{
-		scr_copytop = 1;
+		scr_copytop = true;
 		Draw_TileClear (0,(int)scr_con_current,vid.width, vid.height - (int)scr_con_current);
 		Sbar_Changed ();
 	}
-	else if (clearnotify++ < vid.numpages)
+	else if (scr_clearnotify++ < vid.numpages)
 	{
-		scr_copytop = 1;
+		scr_copytop = true;
 		Draw_TileClear (0,0,vid.width, con_notifylines);
 	}
 	else
@@ -500,7 +518,7 @@ void SCR_DrawConsole (void)
 {
 	if (scr_con_current)
 	{
-		scr_copyeverything = 1;
+		scr_copyeverything = true;
 		Con_DrawConsole (scr_con_current, true);
 		clearconsole = 0;
 	}
@@ -521,29 +539,13 @@ void SCR_DrawConsole (void)
 */ 
  
 
-typedef struct
-{
-    char	manufacturer;
-    char	version;
-    char	encoding;
-    char	bits_per_pixel;
-    unsigned short	xmin,ymin,xmax,ymax;
-    unsigned short	hres,vres;
-    unsigned char	palette[48];
-    char	reserved;
-    char	color_planes;
-    unsigned short	bytes_per_line;
-    unsigned short	palette_type;
-    char	filler[58];
-    unsigned char	data;			// unbounded
-} pcx_t;
 
 /* 
 ============== 
 WritePCXfile 
 ============== 
 */ 
-void WritePCXfile (char *filename, byte *data, int width, int height,
+static void WritePCXfile (char *filename, byte *data, int width, int height,
 	int rowbytes, byte *palette) 
 {
 	int		i, j, length;
@@ -699,9 +701,6 @@ void SCR_EndLoadingPlaque (void)
 
 //=============================================================================
 
-char	*scr_notifystring;
-qboolean	scr_drawdialog;
-
 void SCR_DrawNotifyString (void)
 {
 	char	*start;
@@ -846,11 +845,11 @@ void SCR_UpdateScreen (void)
 {
 	vrect_t		vrect;
 	
-	if (scr_skipupdate || block_drawing)
+	if (scr_skipupdate || scr_block_drawing)
 		return;
 
-	scr_copytop = 0;
-	scr_copyeverything = 0;
+	scr_copytop = false;
+	scr_copyeverything = false;
 
 	if (scr_disabled_for_loading)
 	{
@@ -868,11 +867,10 @@ void SCR_UpdateScreen (void)
 
 	if (!scr_initialized || !con_initialized)
 		return;				// not initialized yet
-
 	
-//
-// check for vid changes
-//
+	//
+	// check for vid changes
+	//
 	if (oldfov != scr_fov.value)
 	{
 		oldfov = scr_fov.value;
@@ -887,19 +885,19 @@ void SCR_UpdateScreen (void)
 	
 	if (vid.recalc_refdef)
 	{
-	// something changed, so reorder the screen
+		// something changed, so reorder the screen
 		SCR_CalcRefdef ();
 	}
 
-//
-// do 3D refresh drawing, and then update the screen
-//
+	//
+	// do 3D refresh drawing, and then update the screen
+	//
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
 	if (scr_fullupdate++ < vid.numpages)
 	{	// clear the entire screen
-		scr_copyeverything = 1;
-		Draw_TileClear (0,0,vid.width,vid.height);
+		scr_copyeverything = true;
+		Draw_TileClear (0, 0, vid.width, vid.height);
 		Sbar_Changed ();
 	}
 
@@ -909,11 +907,11 @@ void SCR_UpdateScreen (void)
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									//  for linear writes all the time
 
-	VID_LockBuffer ();
+	VID_LockBuffer (); // Unused
 
 	V_RenderView ();
 
-	VID_UnlockBuffer ();
+	VID_UnlockBuffer (); // Unused
 
 	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
 
@@ -954,7 +952,9 @@ void SCR_UpdateScreen (void)
 		M_Draw ();
 	}
 
-	SCR_DrawFps();
+	if(scr_showfps.value){
+		SCR_DrawFps();
+	}
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									// for linear writes all the time
@@ -970,7 +970,7 @@ void SCR_UpdateScreen (void)
 		vrect.y = 0;
 		vrect.width = vid.width;
 		vrect.height = vid.height;
-		vrect.pnext = 0;
+		vrect.pnext = NULL;
 	
 		VID_Update (&vrect);
 	}
@@ -980,7 +980,7 @@ void SCR_UpdateScreen (void)
 		vrect.y = 0;
 		vrect.width = vid.width;
 		vrect.height = vid.height - sb_lines;
-		vrect.pnext = 0;
+		vrect.pnext = NULL;
 	
 		VID_Update (&vrect);
 	}	
@@ -990,7 +990,7 @@ void SCR_UpdateScreen (void)
 		vrect.y = scr_vrect.y;
 		vrect.width = scr_vrect.width;
 		vrect.height = scr_vrect.height;
-		vrect.pnext = 0;
+		vrect.pnext = NULL;
 	
 		VID_Update (&vrect);
 	}
