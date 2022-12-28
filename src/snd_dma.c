@@ -52,12 +52,11 @@ static int		    num_sfx;
 static sfx_t        *ambient_sfx[NUM_AMBIENTS];
 static qboolean     sound_started = false;
 
-cvar_t       snd_bgmvolume = {"bgmvolume", "1", true};
+
 cvar_t       snd_loadas8bit = {"loadas8bit", "0"};
 cvar_t       snd_volume = {"volume", "0.7", true};
 static cvar_t       nosound = {"nosound", "0"};
 static cvar_t       precache = {"precache", "1"};
-static cvar_t       bgmbuffer = {"bgmbuffer", "4096"};
 static cvar_t       ambient_level = {"ambient_level", "0.3"};
 static cvar_t       ambient_fade = {"ambient_fade", "100"};
 static cvar_t       snd_show = {"snd_show", "0"};
@@ -352,8 +351,6 @@ void S_Init (void)
     Cvar_RegisterVariable(&snd_volume);
     Cvar_RegisterVariable(&precache);
     Cvar_RegisterVariable(&snd_loadas8bit);
-    Cvar_RegisterVariable(&snd_bgmvolume);
-    Cvar_RegisterVariable(&bgmbuffer);
     Cvar_RegisterVariable(&ambient_level);
     Cvar_RegisterVariable(&ambient_fade);
     Cvar_RegisterVariable(&snd_show);
@@ -370,7 +367,7 @@ void S_Init (void)
 
     S_MIX_InitScaletable ();
 
-    known_sfx = Hunk_AllocName (MAX_SFX*sizeof(sfx_t), "sfx_t");
+    known_sfx = Hunk_AllocName (MAX_SFX * sizeof(sfx_t), "sfx_t");
     num_sfx = 0;
 
     if ( snd_shm ) {

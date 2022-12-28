@@ -6,7 +6,7 @@
 #include "sys.h"
 
 #define DISCO_AUDIO_USE_BSP		        0
-#define DISCO_AUDIO_TEST_MODE           1
+#define DISCO_AUDIO_TEST_MODE           0
 #define DISCO_AUDIO_DYNAMIC_BUFFER      0
 
 #define DISCO_AUDIO_CHANNELS            2
@@ -108,7 +108,14 @@ void DISCO_Audio_Test(void){
 	}
 	#endif
 #endif
+  // TODO: FIX for byte size
+    for(int i = 0; i < 1024; i++){
+        audio_buffer[i] = i * 64;
+    }
 
+    for(int i = 1024; i > 0; i--){
+        audio_buffer[2048 - i] = i * 64;
+    }
     while(1){}
 }
 #endif
@@ -199,15 +206,6 @@ static void DISCO_Audio_Init_LL(discoaudio_t *spec, SAI_HandleTypeDef *handle, D
     spec->buf = audio_buffer;
     spec->size = DISCO_AUDIO_SAMPLES;
     audio_callback = spec->callback;
-
-     // TODO: FIX for byte size
-    for(int i = 0; i < 1024; i++){
-        audio_buffer[i] = i * 64;
-    }
-
-    for(int i = 1024; i > 0; i--){
-        audio_buffer[2048 - i] = i * 64;
-    }
 
     HAL_SAI_Transmit_DMA(&hSai, (uint8_t *)spec->buf, DISCO_AUDIO_BUFFER_SAMPLES);
 }
@@ -348,13 +346,17 @@ void DMA2_Stream6_IRQHandler(void)
     if (tmpisr & (DMA_FLAG_HTIF0_4 << hdma->StreamIndex)){
         DMA2->HIFCR = DMA_FLAG_HTIF0_4 << hdma->StreamIndex;
         audio_callback(audio_buffer, DISCO_AUDIO_HALF_BUFFER_SIZE);
+        #if DISCO_AUDIO_TEST_MODE
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_7);
+        #endif
     }
 
     if (tmpisr & (DMA_FLAG_TCIF0_4 << hdma->StreamIndex)){
         DMA2->HIFCR = DMA_FLAG_TCIF0_4 << hdma->StreamIndex;
         audio_callback(audio_buffer + DISCO_AUDIO_HALF_BUFFER_SIZE, DISCO_AUDIO_HALF_BUFFER_SIZE);
+        #if DISCO_AUDIO_TEST_MODE
 		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_6);
+        #endif
     }
 }
 #endif
@@ -370,5 +372,5 @@ void SNDDMA_Shutdown(void)
 int SNDDMA_GetDMAPos(void)
 {
     DMA_HandleTypeDef *hdma = &hSaiDma;
-    return hdma->Instance->NDTR;
+    return DISCO_AUDIO_BUFFER_SAMPLES - hdma->Instance->NDTR;
 }

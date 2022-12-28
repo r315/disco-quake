@@ -19,6 +19,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 
+cvar_t       snd_bgmvolume = {"bgmvolume", "1", true};
+static cvar_t       bgmbuffer = {"bgmbuffer", "4096"};
+
 void CDAudio_Play(byte track, qboolean looping)
 {
 }
@@ -46,6 +49,8 @@ void CDAudio_Update(void)
 
 int CDAudio_Init(void)
 {
+	Cvar_RegisterVariable(&bgmbuffer);
+	Cvar_RegisterVariable(&snd_bgmvolume);
 	return 0;
 }
 
