@@ -156,18 +156,3 @@ void D_SetupFrame (void)
 
 	d_aflatcolor = 0;
 }
-
-
-/*
-===============
-D_UpdateRects
-===============
-*/
-void D_UpdateRects (vrect_t *prect)
-{
-
-// the software driver draws these directly to the vid buffer
-
-	UNUSED(prect);
-}
-

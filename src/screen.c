@@ -903,9 +903,6 @@ void SCR_UpdateScreen (void)
 		Sbar_Changed ();
 	}
 
-	pconupdate = NULL;
-
-
 	SCR_SetUpToDrawConsole ();
 	SCR_EraseCenterString ();
 
@@ -960,12 +957,7 @@ void SCR_UpdateScreen (void)
 	SCR_DrawFps();
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									//  for linear writes all the time
-	if (pconupdate)
-	{
-		D_UpdateRects (pconupdate);
-	}
-
+									// for linear writes all the time
 	V_UpdatePalette ();
 
 //

@@ -144,9 +144,6 @@ static surf_t	*lsurfs;
 finalvert_t		*finalverts;
 auxvert_t		*auxverts;
 
-void CreatePassages (void);
-void SetVisibilityByPassages (void);
-
 /*
 ==================
 R_InitTextures
@@ -326,9 +323,6 @@ void R_NewMap (void)
 
 	r_dowarpold = false;
 	r_viewchanged = false;
-#ifdef PASSAGES
-CreatePassages ();
-#endif
 }
 
 
@@ -986,11 +980,7 @@ void R_RenderView_ (void)
 
 	R_SetupFrame ();
 
-#ifdef PASSAGES
-SetVisibilityByPassages ();
-#else
 	R_MarkLeaves ();	// done here so we know if we're in water
-#endif
 
 // make FDIV fast. This reduces timing precision after we've been running for a
 // while, so we don't do it globally.  This also sets chop mode, and we do it
