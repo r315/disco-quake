@@ -104,27 +104,34 @@ Cvar_Set
 void Cvar_Set (char *var_name, char *value)
 {
 	cvar_t	*var;
-	qboolean changed;
 	
 	var = Cvar_FindVar (var_name);
+	
 	if (!var)
 	{	// there is an error in C code if this happens
 		Con_Printf ("Cvar_Set: variable %s not found\n", var_name);
 		return;
 	}
 
-	changed = Q_strcmp(var->string, value);
+	// if same value, ignore it
+	if (Q_strcmp(var->string, value) == false) {
+		return;
+	}
 	
 	Z_Free (var->string);	// free the old value string
 	
 	var->string = Z_Malloc (Q_strlen(value)+1);
 	Q_strcpy (var->string, value);
 	var->value = Q_atof (var->string);
-	if (var->server && changed)
+
+	if (var->server)
 	{
 		if (sv.active)
 			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
 	}
+
+	if (var->notify)
+		var->notify(var);
 }
 
 /*

@@ -61,6 +61,7 @@ typedef struct cvar_s
 	qboolean server;		// notifies players when changed
 	float	value;
 	struct cvar_s *next;
+	void (*notify)(struct cvar_s *);
 } cvar_t;
 
 void 	Cvar_RegisterVariable (cvar_t *variable);
