@@ -28,20 +28,16 @@ void SCR_CenterPrint (char *str);
 void SCR_BeginLoadingPlaque (void);
 void SCR_EndLoadingPlaque (void);
 int  SCR_ModalMessage (char *text);
-void SCR_UpdateWholeScreen (void);
-
-extern	int		    scr_con_current;
-extern	int			scr_fullupdate;	    // set to 0 to force full redraw
-extern	int			scr_clearnotify;	// set to 0 whenever notify text is drawn
-extern	qboolean	scr_disabled_for_loading;
-extern	qboolean	scr_skipupdate;
-
-extern cvar_t       scr_viewsize;
+void SCR_SetFullUpdate (void);      // Fill screen with background texture and copy full view to video buffer
+void SCR_SetTopCopy (void);         // Copy screen part above status bar to video buffer
+void SCR_SetFullCopy (void);        // Copy full screen to video buffer
+void SCR_SetClearNotify (void);
+int  SCR_GetConsoleSize (void);
+void SCR_SetEnable (qboolean en);
+qboolean SCR_GetEnable (void);
 
 extern cvar_t       scr_viewsize;
+extern cvar_t	    scr_fov;
 
-// only the refresh window will be updated unless these variables are flagged 
-extern qboolean	    scr_copytop;
-extern qboolean     scr_copyeverything;
-extern qboolean		scr_block_drawing;
+// only the refresh window will be updated unless these variables are flagged
 extern vrect_t	    scr_vrect;

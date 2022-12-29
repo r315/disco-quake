@@ -3033,9 +3033,9 @@ void M_Draw (void)
 
 	if (!m_recursiveDraw)
 	{
-		scr_copyeverything = true;
+		SCR_SetFullUpdate ();
 
-		if (scr_con_current)
+		if (SCR_GetConsoleSize ())
 		{
 			Draw_ConsoleBackground (vid.height);
 			VID_UnlockBuffer ();
@@ -3045,7 +3045,7 @@ void M_Draw (void)
 		else
 			Draw_FadeScreen ();
 
-		scr_fullupdate = 0;
+		SCR_SetFullUpdate ();
 	}
 	else
 	{

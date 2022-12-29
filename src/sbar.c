@@ -925,17 +925,17 @@ Sbar_Draw
 */
 void Sbar_Draw (void)
 {
-	if (scr_con_current == vid.height)
+	if (SCR_GetConsoleSize () == vid.height)
 		return;		// console is full screen
 
 	if (sb_updates >= vid.numpages)
 		return;
 
-	scr_copyeverything = true;
+	SCR_SetFullCopy ();
 
 	sb_updates++;
 
-	if (sb_lines && vid.width > 320) 
+	if (sb_lines && vid.width > WARP_WIDTH) 
 		Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
 
 	if (sb_lines > 24)
@@ -955,16 +955,16 @@ void Sbar_Draw (void)
 	{
 		Sbar_DrawPic (0, 0, sb_sbar);
 
-   // keys (hipnotic only)
-      //MED 01/04/97 moved keys here so they would not be overwritten
-      if (hipnotic)
-      {
-         if (cl.items & IT_KEY1)
-            Sbar_DrawPic (209, 3, sb_items[0]);
-         if (cl.items & IT_KEY2)
-            Sbar_DrawPic (209, 12, sb_items[1]);
-      }
-   // armor
+   		// keys (hipnotic only)
+      	//MED 01/04/97 moved keys here so they would not be overwritten
+      	if (hipnotic)
+      	{
+        	if (cl.items & IT_KEY1)
+            	Sbar_DrawPic (209, 3, sb_items[0]);
+         	if (cl.items & IT_KEY2)
+            	Sbar_DrawPic (209, 12, sb_items[1]);
+      	}
+   		// armor
 		if (cl.items & IT_INVULNERABILITY)
 		{
 			Sbar_DrawNum (24, 0, 666, 3, 1);
@@ -996,14 +996,14 @@ void Sbar_Draw (void)
 			}
 		}
 
-	// face
+		// face
 		Sbar_DrawFace ();
 
-	// health
+		// health
 		Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3
 		, cl.stats[STAT_HEALTH] <= 25);
 
-	// ammo icon
+		// ammo icon
 		if (rogue)
 		{
 			if (cl.items & RIT_SHELLS)
@@ -1037,7 +1037,7 @@ void Sbar_Draw (void)
 					  cl.stats[STAT_AMMO] <= 10);
 	}
 
-	if (vid.width > 320) {
+	if (vid.width > WARP_WIDTH) {
 		if (cl.gametype == GAME_DEATHMATCH)
 			Sbar_MiniDeathmatchOverlay ();
 	}
@@ -1092,8 +1092,7 @@ void Sbar_DeathmatchOverlay (void)
 	char			num[12];
 	scoreboard_t	*s;
 
-	scr_copyeverything = true;
-	scr_fullupdate = 0;
+	SCR_SetFullUpdate ();
 
 	pic = Draw_CachePic ("gfx/ranking.lmp");
 	M_DrawPic ((320-pic->width)/2, 8, pic);
@@ -1176,8 +1175,7 @@ void Sbar_MiniDeathmatchOverlay (void)
 	if (vid.width < 512 || !sb_lines)
 		return;
 
-	scr_copyeverything = true;
-	scr_fullupdate = 0;
+	SCR_SetFullUpdate ();
 
 // scores
 	Sbar_SortFrags ();
@@ -1270,8 +1268,7 @@ void Sbar_IntermissionOverlay (void)
 	int		dig;
 	int		num;
 
-	scr_copyeverything = true;
-	scr_fullupdate = 0;
+	SCR_SetFullUpdate ();
 
 	if (cl.gametype == GAME_DEATHMATCH)
 	{
@@ -1314,7 +1311,7 @@ void Sbar_FinaleOverlay (void)
 {
 	qpic_t	*pic;
 
-	scr_copyeverything = true;
+	SCR_SetFullUpdate ();
 
 	pic = Draw_CachePic ("gfx/finale.lmp");
 	Draw_TransPic ( (vid.width-pic->width)/2, 16, pic);

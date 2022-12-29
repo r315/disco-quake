@@ -40,40 +40,36 @@ typedef struct pcx_s
 } pcx_t;
 
 // only the refresh window will be updated unless these variables are flagged 
-qboolean			scr_copytop;
-qboolean			scr_copyeverything;
+static qboolean		scr_copytop;
+static qboolean		scr_copyeverything;
 
-int					scr_con_current;
+static int			scr_con_current;	// console current scan lines
 static int			scr_conlines;		// lines of console to display
-static float		oldscreensize, oldfov;
 static qboolean		scr_initialized;	// ready to draw
 
 cvar_t				scr_viewsize	= {"viewsize","100", true};
 cvar_t				scr_fov			= {"fov","90"};	// 10 - 170
-cvar_t				scr_centertime	= {"scr_centertime","2"};
+static cvar_t		scr_centertime	= {"scr_centertime","2"};
 static cvar_t		scr_conspeed	= {"scr_conspeed","300"};
 static cvar_t		scr_showram		= {"showram","1"};
 static cvar_t		scr_showturtle	= {"showturtle","0"};
 static cvar_t		scr_showpause	= {"showpause","1"};
 static cvar_t		scr_printspeed	= {"scr_printspeed","8"};
-static cvar_t		scr_showfps 	= { "showfps","1" };
+static cvar_t		scr_showfps 	= {"showfps","1" };
 
 static qpic_t		*scr_ram;
 static qpic_t		*scr_net;
 static qpic_t		*scr_turtle;
 
-int					scr_fullupdate;
-int					scr_clearnotify;
-static int			clearconsole;
+static int			scr_fullupdate;		// set to 0 to force full redraw
+static int			scr_clearnotify;	// set to 0 whenever notify text is drawn
+static int			scr_clearconsole;
 
-
-vrect_t				scr_vrect;
-
-qboolean			scr_disabled_for_loading;
+static qboolean		scr_enable;
 static qboolean		scr_drawloading;
 static float		scr_disabled_time;
-qboolean			scr_skipupdate;
-qboolean			scr_block_drawing;
+
+vrect_t				scr_vrect;
 
 /*
 ===============================================================================
@@ -293,6 +289,11 @@ static void SCR_CalcRefdef (void)
 }
 
 
+void SCR_SetClearNotify (void)
+{
+	scr_clearnotify = 0;
+}
+
 /*
 =================
 SCR_SizeUp_f
@@ -320,6 +321,10 @@ void SCR_SizeDown_f (void)
 	vid.recalc_refdef = 1;
 }
 
+static void SCR_Changed_cb (cvar_t *var)
+{
+	vid.recalc_refdef = true;
+}
 //============================================================================
 
 /*
@@ -328,7 +333,7 @@ SCR_Init
 ==================
 */
 void SCR_Init (void)
-{
+{	
 	Cvar_RegisterVariable (&scr_fov);
 	Cvar_RegisterVariable (&scr_viewsize);
 	Cvar_RegisterVariable (&scr_conspeed);
@@ -338,6 +343,9 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&scr_centertime);
 	Cvar_RegisterVariable (&scr_printspeed);
 	Cvar_RegisterVariable (&scr_showfps);
+
+	scr_fov.notify = SCR_Changed_cb;
+	scr_viewsize.notify = SCR_Changed_cb;
 
 //
 // register our commands
@@ -494,7 +502,7 @@ void SCR_SetUpToDrawConsole (void)
 			scr_con_current = scr_conlines;
 	}
 
-	if (clearconsole++ < vid.numpages)
+	if (scr_clearconsole++ < vid.numpages)
 	{
 		scr_copytop = true;
 		Draw_TileClear (0,(int)scr_con_current,vid.width, vid.height - (int)scr_con_current);
@@ -520,7 +528,7 @@ void SCR_DrawConsole (void)
 	{
 		scr_copyeverything = true;
 		Con_DrawConsole (scr_con_current, true);
-		clearconsole = 0;
+		scr_clearconsole = 0;
 	}
 	else
 	{
@@ -681,7 +689,7 @@ void SCR_BeginLoadingPlaque (void)
 	SCR_UpdateScreen ();
 	scr_drawloading = false;
 
-	scr_disabled_for_loading = true;
+	scr_enable = false;
 	scr_disabled_time = realtime;
 	scr_fullupdate = 0;
 }
@@ -694,7 +702,7 @@ SCR_EndLoadingPlaque
 */
 void SCR_EndLoadingPlaque (void)
 {
-	scr_disabled_for_loading = false;
+	scr_enable = true;
 	scr_fullupdate = 0;
 	Con_ClearNotify ();
 }
@@ -810,10 +818,8 @@ void SCR_DrawFrameCount(void) {
 void SCR_DrawFps(void) {
 	static float last_time = 0;
 	static int fps = 0, fps_count = 0;
-	int cx;
-	int cy = 0;
-	char data[20];
 
+	// update every second
 	if ((Sys_FloatTime() - last_time) > 1.0f) {
 		last_time = Sys_FloatTime();
 		fps = fps_count;
@@ -823,11 +829,18 @@ void SCR_DrawFps(void) {
 		fps_count++;
 	}
 
-	int len = sprintf(data, "%d", fps);
-	cx = vid.width - (len * 8);
-	for (int i = 0; i < len; i++) {
-		Draw_Character(cx, cy, data[i]);
-		cx += 8;
+	if(scr_showfps.value){	
+		int cx;
+		int cy = 0;
+		char data[20];	
+		int len = sprintf(data, "%d", fps);
+		
+		cx = vid.width - (len * 8);
+
+		for (int i = 0; i < len; i++) {
+			Draw_Character(cx, cy, data[i]);
+			cx += 8;
+		}
 	}
 }
 /*
@@ -844,18 +857,15 @@ needs almost the entire 256k of stack space!
 void SCR_UpdateScreen (void)
 {
 	vrect_t		vrect;
-	
-	if (scr_skipupdate || scr_block_drawing)
-		return;
 
 	scr_copytop = false;
 	scr_copyeverything = false;
 
-	if (scr_disabled_for_loading)
+	if (!scr_enable)
 	{
 		if (realtime - scr_disabled_time > 60)
 		{
-			scr_disabled_for_loading = false;
+			scr_enable = true;
 			Con_Printf ("load failed.\n");
 		}
 		else
@@ -867,21 +877,6 @@ void SCR_UpdateScreen (void)
 
 	if (!scr_initialized || !con_initialized)
 		return;				// not initialized yet
-	
-	//
-	// check for vid changes
-	//
-	if (oldfov != scr_fov.value)
-	{
-		oldfov = scr_fov.value;
-		vid.recalc_refdef = true;
-	}
-	
-	if (oldscreensize != scr_viewsize.value)
-	{
-		oldscreensize = scr_viewsize.value;
-		vid.recalc_refdef = true;
-	}
 	
 	if (vid.recalc_refdef)
 	{
@@ -951,10 +946,8 @@ void SCR_UpdateScreen (void)
 		SCR_DrawConsole ();
 		M_Draw ();
 	}
-
-	if(scr_showfps.value){
-		SCR_DrawFps();
-	}
+	
+	SCR_DrawFps();	
 
 	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
 									// for linear writes all the time
@@ -970,9 +963,7 @@ void SCR_UpdateScreen (void)
 		vrect.y = 0;
 		vrect.width = vid.width;
 		vrect.height = vid.height;
-		vrect.pnext = NULL;
-	
-		VID_Update (&vrect);
+
 	}
 	else if (scr_copytop)
 	{
@@ -980,30 +971,52 @@ void SCR_UpdateScreen (void)
 		vrect.y = 0;
 		vrect.width = vid.width;
 		vrect.height = vid.height - sb_lines;
-		vrect.pnext = NULL;
-	
-		VID_Update (&vrect);
 	}	
 	else
 	{
 		vrect.x = scr_vrect.x;
 		vrect.y = scr_vrect.y;
 		vrect.width = scr_vrect.width;
-		vrect.height = scr_vrect.height;
-		vrect.pnext = NULL;
-	
-		VID_Update (&vrect);
+		vrect.height = scr_vrect.height;	
 	}
+
+	vrect.pnext = NULL;
+	VID_Update (&vrect);
 }
 
 
 /*
 ==================
-SCR_UpdateWholeScreen
+SCR_SetFullUpdate
 ==================
 */
-void SCR_UpdateWholeScreen (void)
+void SCR_SetFullUpdate (void)
 {
+	scr_copyeverything = true;
 	scr_fullupdate = 0;
-	SCR_UpdateScreen ();
+}
+
+void SCR_SetTopCopy (void)
+{
+	scr_copytop = true;
+}
+
+void SCR_SetFullCopy (void)
+{
+	scr_copyeverything = true;
+}
+
+int SCR_GetConsoleSize (void)
+{
+	return scr_con_current;
+}
+
+void SCR_SetEnable (qboolean en)
+{
+	scr_enable = en;
+}
+
+qboolean SCR_GetEnable (void)
+{
+	return scr_enable;
 }

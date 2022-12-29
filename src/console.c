@@ -403,7 +403,7 @@ void Con_Printf (char *fmt, ...)
 	Con_Print (msg);
 	
 // update the screen if the console is displayed
-	if (cls.signon != SIGNONS && !scr_disabled_for_loading )
+	if (cls.signon != SIGNONS && SCR_GetEnable ())
 	{
 	// protect against infinite loop if something in SCR_UpdateScreen calls
 	// Con_Printd
@@ -456,10 +456,11 @@ void Con_SafePrintf (char *fmt, ...)
 	vsprintf (msg,fmt,argptr);
 	va_end (argptr);
 
-	temp = scr_disabled_for_loading;
-	scr_disabled_for_loading = true;
+	temp = SCR_GetEnable ();
+
+	SCR_SetEnable (false);
 	Con_Printf ("%s", msg);
-	scr_disabled_for_loading = temp;
+	SCR_SetEnable (temp);
 }
 
 
@@ -537,8 +538,8 @@ void Con_DrawNotify (void)
 			continue;
 		text = con_text + (i % con_totallines)*con_linewidth;
 		
-		scr_clearnotify = 0;
-		scr_copytop = true;
+		SCR_SetClearNotify ();
+		SCR_SetTopCopy ();
 
 		for (x = 0 ; x < con_linewidth ; x++)
 			Draw_Character ( (x+1)<<3, v, text[x]);
@@ -549,8 +550,8 @@ void Con_DrawNotify (void)
 
 	if (key_dest == key_message)
 	{
-		scr_clearnotify = 0;
-		scr_copytop = true;
+		SCR_SetClearNotify ();
+		SCR_SetTopCopy();
 	
 		x = 0;
 		
