@@ -22,6 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
+#define	MAX_TIMINGS		100
 
 /*
 ===============
@@ -57,7 +58,6 @@ void Show (void)
 	vr.pnext = NULL;
 	VID_Update (&vr);
 }
-
 
 /*
 ====================
@@ -145,8 +145,7 @@ R_TimeGraph
 Performance monitoring tool
 ==============
 */
-#define	MAX_TIMINGS		100
-extern float mouse_x, mouse_y;
+//extern float mouse_x, mouse_y;
 void R_TimeGraph (void)
 {
 	static	int		timex;
