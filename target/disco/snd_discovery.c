@@ -4,8 +4,8 @@
 #define	MAX_SFX		256
 
 /* Global variables */
-cvar_t snd_volume 			= {"volume", "0.7", true};
 cvar_t snd_loadas8bit  		= {"loadas8bit", "0"};
+static cvar_t snd_volume 	= {"volume", "0.7", true};
 static cvar_t precache 		= {"precache", "1"};
 static cvar_t ambient_lvl  	= {"ambient_level", "0.3"};
 static cvar_t ambient_fade 	= {"ambient_fade", "100"};
@@ -646,6 +646,16 @@ Public functions
 */
 void S_BeginPrecaching (void) { /* not used */ }
 
+void S_ChangeVolume(int dir)
+{
+	snd_volume.value += dir * 0.1;
+	if (snd_volume.value < 0)
+		snd_volume.value = 0;
+	if (snd_volume.value > 1)
+		snd_volume.value = 1;
+	Cvar_SetValue ("volume", snd_volume.value);
+}
+
 void S_ClearBuffer (void)
 {
     int		clear;
@@ -669,6 +679,10 @@ void S_ExtraUpdate (void)
 	//	return;		// don't pollute timings
 	SND_Update();
  }
+
+float S_GetVolume (void){
+	return snd_volume.value;
+}
 
 void S_Init (void)
 {

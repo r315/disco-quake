@@ -27,6 +27,7 @@ $(REPO_F769)/Middlewares/Third_Party/FatFs/src \
 
 QUAKE_SOURCES = \
 chase.c \
+cd_null.c \
 cl_demo.c \
 cl_input.c \
 cl_main.c \
@@ -59,7 +60,7 @@ model.c \
 net_loop.c \
 net_main.c \
 net_vcr.c \
-nonintel.c \
+net_none.c \
 pr_cmds.c \
 pr_edict.c \
 pr_exec.c \
@@ -89,9 +90,7 @@ wad.c \
 world.c \
 zone.c \
 vid_discovery.c \
-net_discovery.c \
 snd_discovery.c \
-cd_discovery.c \
 in_discovery.c \
 
 BSP_SOURCES = \

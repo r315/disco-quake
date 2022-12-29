@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "r_local.h"
 
-//define	PASSAGES
+#define		VIEWMODNAME_LENGTH	256
 
 void		*colormap;
 vec3_t		viewlightvec;
@@ -51,7 +51,7 @@ int			r_clipflags;
 
 byte		*r_warpbuffer;
 
-byte		*r_stack_start;
+//byte		*r_stack_start;
 
 qboolean	r_fov_greater_than_90;
 
@@ -72,13 +72,10 @@ float		xscale, yscale;
 float		xscaleinv, yscaleinv;
 float		xscaleshrink, yscaleshrink;
 float		aliasxscale, aliasyscale, aliasxcenter, aliasycenter;
-
-extern int		screenwidth;
-
-float	pixelAspect;
-float	screenAspect;
-float	verticalFieldOfView;
-float	xOrigin, yOrigin;
+float		pixelAspect;
+float		screenAspect;
+float		verticalFieldOfView;
+float		xOrigin, yOrigin;
 
 mplane_t	screenedge[4];
 
@@ -92,7 +89,6 @@ int		r_polycount;
 int		r_drawnpolycount;
 int		r_wholepolycount;
 
-#define		VIEWMODNAME_LENGTH	256
 char		viewmodname[VIEWMODNAME_LENGTH+1];
 int			modcount;
 
@@ -112,8 +108,6 @@ int		d_lightstylevalue[256];	// 8.8 fraction of base light value
 
 float	dp_time1, dp_time2, db_time1, db_time2, rw_time1, rw_time2;
 float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
-
-void R_MarkLeaves (void);
 
 cvar_t	r_draworder = {"r_draworder","0"};
 cvar_t	r_speeds = {"r_speeds","0"};
@@ -137,12 +131,12 @@ cvar_t	r_numedges = {"r_numedges", "0"};
 cvar_t	r_aliastransbase = {"r_aliastransbase", "200"};
 cvar_t	r_aliastransadj = {"r_aliastransadj", "100"};
 
-extern cvar_t	scr_fov;
-
 static edge_t	*ledges;
 static surf_t	*lsurfs;
 finalvert_t		*finalverts;
 auxvert_t		*auxverts;
+
+void R_MarkLeaves (void);
 
 /*
 ==================
@@ -184,10 +178,12 @@ R_Init
 */
 void R_Init (void)
 {
+	/*
 	int		dummy;
 	
 // get stack position so we can guess if we are going to overflow
 	r_stack_start = (byte *)&dummy;
+*/
 
 	if(ledges == NULL){
 		ledges = (edge_t*)calloc(NUMSTACKEDGES +
@@ -296,7 +292,6 @@ void R_NewMap (void)
 	// surface 0 doesn't really exist; it's just a dummy because index 0
 	// is used to indicate no edge attached to surface
 		surfaces--;
-		R_SurfacePatch ();
 	}
 	else
 	{
@@ -492,14 +487,12 @@ void R_ViewChanged (vrect_t *pvrect, int lineadj, float aspect)
 		Sys_MakeCodeWriteable ((long)R_Surf8Start,
 						     (long)R_Surf8End - (long)R_Surf8Start);
 		colormap = vid.colormap;
-		R_Surf8Patch ();
 	}
 	else
 	{
 		Sys_MakeCodeWriteable ((long)R_Surf16Start,
 						     (long)R_Surf16End - (long)R_Surf16Start);
 		colormap = vid.colormap16;
-		R_Surf16Patch ();
 	}
 #endif	// id386
 
@@ -917,7 +910,6 @@ void R_EdgeDrawing (void)
 	// surface 0 doesn't really exist; it's just a dummy because index 0
 	// is used to indicate no edge attached to surface
 		surfaces--;
-		R_SurfacePatch ();
 	}
 
 	R_BeginEdgeFrame ();
@@ -1063,7 +1055,7 @@ void R_RenderView_ (void)
 
 void R_RenderView (void)
 {
-	int		dummy;
+/*	int		dummy;
 	int		delta;
 	
 	delta = (byte *)&dummy - r_stack_start;
@@ -1078,7 +1070,7 @@ void R_RenderView (void)
 
 	if ( (long)(&r_warpbuffer) & 3 )
 		Sys_Error ("Globals are missaligned");
-
+*/
 	R_RenderView_ ();
 }
 

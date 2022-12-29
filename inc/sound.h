@@ -112,6 +112,8 @@ void S_StopSound(int entnum, int entchannel);
 void S_StopAllSounds(qboolean clear);
 void S_TouchSound(char *sample);
 void S_Update(vec3_t origin, vec3_t v_forward, vec3_t v_right, vec3_t v_up);
+void S_ChangeVolume(int dir);
+float S_GetVolume(void);
 
 // initializes cycling through a DMA buffer and returns information on it
 qboolean SNDDMA_Init(void);
@@ -138,8 +140,5 @@ extern channel_t snd_channels[MAX_CHANNELS];
 extern int snd_total_channels;
 extern int snd_paintedtime;
 extern dma_t *snd_shm;
-
 extern cvar_t snd_loadas8bit;
-extern cvar_t snd_bgmvolume;
-extern cvar_t snd_volume;
 #endif

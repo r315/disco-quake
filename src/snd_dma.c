@@ -54,7 +54,7 @@ static qboolean     sound_started = false;
 
 
 cvar_t       snd_loadas8bit = {"loadas8bit", "0"};
-cvar_t       snd_volume = {"volume", "0.7", true};
+static cvar_t       snd_volume = {"volume", "0.7", true};
 static cvar_t       nosound = {"nosound", "0"};
 static cvar_t       precache = {"precache", "1"};
 static cvar_t       ambient_level = {"ambient_level", "0.3"};
@@ -328,6 +328,19 @@ void S_Startup (void)
     sound_started = true;
 }
 
+float S_GetVolume (void){
+	return snd_volume.value;
+}
+
+void S_ChangeVolume(int dir)
+{
+	snd_volume.value += dir * 0.1;
+	if (snd_volume.value < 0)
+		snd_volume.value = 0;
+	if (snd_volume.value > 1)
+		snd_volume.value = 1;
+	Cvar_SetValue ("volume", snd_volume.value);
+}
 
 /*
 ================

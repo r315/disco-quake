@@ -151,8 +151,6 @@ void R_DrawSurfaceBlock8_mip3 (void);
 
 void R_GenSkyTile (void *pdest);
 void R_GenSkyTile16 (void *pdest);
-void R_Surf8Patch (void);
-void R_Surf16Patch (void);
 void R_DrawSubmodelPolygons (model_t *pmodel, int clipflags);
 void R_DrawSolidClippedSubmodelPolygons (model_t *pmodel);
 
@@ -251,7 +249,6 @@ void R_DrawParticles (void);
 void R_InitParticles (void);
 void R_ClearParticles (void);
 void R_ReadPointFile_f (void);
-void R_SurfacePatch (void);
 
 extern int		r_amodels_drawn;
 extern edge_t	*auxedges;
@@ -286,7 +283,6 @@ extern float	se_time1, se_time2, de_time1, de_time2, dv_time1, dv_time2;
 extern int		r_frustum_indexes[4*6];
 extern int		r_maxsurfsseen, r_maxedgesseen, r_cnumsurfs;
 extern qboolean	r_surfsonstack;
-extern cshift_t	cshift_water;
 extern qboolean	r_dowarpold, r_viewchanged;
 
 extern mleaf_t	*r_viewleaf, *r_oldviewleaf;

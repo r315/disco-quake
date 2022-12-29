@@ -19,13 +19,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 #include "quakedef.h"
 
-cvar_t       snd_bgmvolume = {"bgmvolume", "1", true};
-static cvar_t       bgmbuffer = {"bgmbuffer", "4096"};
+static cvar_t	snd_bgmvolume = {"bgmvolume", "1", true};
+
 
 void CDAudio_Play(byte track, qboolean looping)
 {
 }
-
 
 void CDAudio_Stop(void)
 {
@@ -46,15 +45,29 @@ void CDAudio_Update(void)
 {
 }
 
-
 int CDAudio_Init(void)
 {
-	Cvar_RegisterVariable(&bgmbuffer);
 	Cvar_RegisterVariable(&snd_bgmvolume);
 	return 0;
 }
 
-
 void CDAudio_Shutdown(void)
 {
+}
+
+void CDAudio_ChangeVolume(int dir)
+{
+	snd_bgmvolume.value += dir * 0.1f;
+
+	if (snd_bgmvolume.value < 0)
+		snd_bgmvolume.value = 0;
+	if (snd_bgmvolume.value > 1)
+		snd_bgmvolume.value = 1;
+
+	Cvar_SetValue ("bgmvolume", snd_bgmvolume.value);
+}
+
+float CDAudio_GetVolume (void)
+{
+	return snd_bgmvolume.value;
 }

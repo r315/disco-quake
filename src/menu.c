@@ -1094,24 +1094,10 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
 	case 6:	// music volume
-#ifdef _WIN32
-		snd_bgmvolume.value += dir * 1.0;
-#else
-		snd_bgmvolume.value += dir * 0.1;
-#endif
-		if (snd_bgmvolume.value < 0)
-			snd_bgmvolume.value = 0;
-		if (snd_bgmvolume.value > 1)
-			snd_bgmvolume.value = 1;
-		Cvar_SetValue ("bgmvolume", snd_bgmvolume.value);
+		CDAudio_ChangeVolume(dir);
 		break;
 	case 7:	// sfx volume
-		snd_volume.value += dir * 0.1;
-		if (snd_volume.value < 0)
-			snd_volume.value = 0;
-		if (snd_volume.value > 1)
-			snd_volume.value = 1;
-		Cvar_SetValue ("volume", snd_volume.value);
+		S_ChangeVolume(dir);
 		break;
 
 	case 8:	// allways run
@@ -1203,11 +1189,11 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 72, r);
 
 	M_Print (16, 80, "       CD Music Volume");
-	r = snd_bgmvolume.value;
+	r = CDAudio_GetVolume ();
 	M_DrawSlider (220, 80, r);
 
 	M_Print (16, 88, "          Sound Volume");
-	r = snd_volume.value;
+	r = S_GetVolume ();
 	M_DrawSlider (220, 88, r);
 
 	M_Print (16, 96,  "            Always Run");

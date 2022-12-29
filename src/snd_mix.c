@@ -213,7 +213,7 @@ void S_MIX_PaintChannels(int endtime)
 		}
 
 		// transfer out according to DMA format
-		mix_vol = snd_volume.value * 256;
+		mix_vol = S_GetVolume () * 256;
 
 		SND_Transfer(end);
 		
