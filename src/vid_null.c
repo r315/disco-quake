@@ -61,8 +61,6 @@ void VID_Shutdown (void){}
 void VID_Update (vrect_t *rects){}
 #if defined(_WIN32)
 void VID_HandlePause (qboolean pause){}
-void VID_LockBuffer (void) {}
-void VID_UnlockBuffer (void) {}
 #endif
 /*
 ================

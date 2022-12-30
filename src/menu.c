@@ -3018,9 +3018,7 @@ void M_Draw (void)
 		if (SCR_GetConsoleSize ())
 		{
 			Draw_ConsoleBackground (vid.height);
-			VID_UnlockBuffer ();
 			S_ExtraUpdate ();
-			VID_LockBuffer ();
 		}
 		else
 			Draw_FadeScreen ();
@@ -3116,9 +3114,7 @@ void M_Draw (void)
 		m_entersound = false;
 	}
 
-	VID_UnlockBuffer ();
 	S_ExtraUpdate ();
-	VID_LockBuffer ();
 }
 
 

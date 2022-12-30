@@ -83,17 +83,6 @@ void D_CopyRects (vrect_t *prects, int transparent)
 
 /*
 ===============
-D_EnableBackBufferAccess
-===============
-*/
-void D_EnableBackBufferAccess (void)
-{
-	VID_LockBuffer ();
-}
-
-
-/*
-===============
 D_TurnZOn
 ===============
 */
@@ -101,18 +90,6 @@ void D_TurnZOn (void)
 {
 // not needed for software version
 }
-
-
-/*
-===============
-D_DisableBackBufferAccess
-===============
-*/
-void D_DisableBackBufferAccess (void)
-{
-	VID_UnlockBuffer ();
-}
-
 
 /*
 ===============

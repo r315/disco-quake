@@ -464,7 +464,5 @@ void Sys_MakeCodeWriteable (unsigned long startaddr, unsigned long length)
 #else
 void Sys_MakeCodeWriteable(unsigned long startaddr, unsigned long length) {}
 void VID_HandlePause(qboolean pause) {}
-void VID_LockBuffer(void) {}
-void VID_UnlockBuffer(void) {}
 #endif
 
