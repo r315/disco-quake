@@ -54,7 +54,7 @@ static qboolean     sound_started = false;
 
 
 cvar_t       snd_loadas8bit = {"loadas8bit", "0"};
-static cvar_t       snd_volume = {"volume", "0.7", true};
+static cvar_t       snd_volume = {"snd_volume", "0.7", true};
 static cvar_t       nosound = {"nosound", "0"};
 static cvar_t       precache = {"precache", "1"};
 static cvar_t       ambient_level = {"ambient_level", "0.3"};
@@ -164,6 +164,11 @@ static void SND_SoundInfo_f(void)
 static void SND_StopAllSounds_f(void)
 {
 	S_StopAllSounds(true);
+}
+
+static void SND_Volume_f (void)
+{
+    Cvar_SetFromCommand("snd_volume");
 }
 
 /*
@@ -339,7 +344,7 @@ void S_ChangeVolume(int dir)
 		snd_volume.value = 0;
 	if (snd_volume.value > 1)
 		snd_volume.value = 1;
-	Cvar_SetValue ("volume", snd_volume.value);
+	Cvar_SetValue ("snd_volume", snd_volume.value);
 }
 
 /*
@@ -359,6 +364,7 @@ void S_Init (void)
     Cmd_AddCommand("stopsound", SND_StopAllSounds_f);
     Cmd_AddCommand("soundlist", SND_SoundList_f);
     Cmd_AddCommand("soundinfo", SND_SoundInfo_f);
+    Cmd_AddCommand("volume", SND_Volume_f);
 
     Cvar_RegisterVariable(&nosound);
     Cvar_RegisterVariable(&snd_volume);

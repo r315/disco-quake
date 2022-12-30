@@ -22,13 +22,27 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-cvar_t bgmvolume = {"bgmvolume", "1", true};
-cvar_t volume = {"volume", "0.7", true};
+cvar_t snd_volume = {"snd_volume", "0.7", true};
 
- 
+static void SND_Volume_f (void)
+{
+    Cvar_SetFromCommand("snd_volume");
+}
+
 void S_Init (void)
 {
-	Cvar_RegisterVariable(&volume);
+	Cvar_RegisterVariable(&snd_volume);
+	Cmd_AddCommand("volume", SND_Volume_f);
+}
+
+void S_ChangeVolume(int dir)
+{
+	snd_volume.value += dir * 0.1;
+	if (snd_volume.value < 0)
+		snd_volume.value = 0;
+	if (snd_volume.value > 1)
+		snd_volume.value = 1;
+	Cvar_SetValue ("snd_volume", snd_volume.value);
 }
 
 void S_AmbientOff (void)

@@ -47,15 +47,15 @@ static int			scr_con_current;	// console current scan lines
 static int			scr_conlines;		// lines of console to display
 static qboolean		scr_initialized;	// ready to draw
 
-cvar_t				scr_viewsize	= {"viewsize","100", true};
-cvar_t				scr_fov			= {"fov","90"};	// 10 - 170
+cvar_t				scr_viewsize	= {"scr_viewsize", "100", true};
+cvar_t				scr_fov			= {"scr_fov", "90"};	// 10 - 170
 static cvar_t		scr_centertime	= {"scr_centertime","2"};
 static cvar_t		scr_conspeed	= {"scr_conspeed","300"};
-static cvar_t		scr_showram		= {"showram","1"};
-static cvar_t		scr_showturtle	= {"showturtle","0"};
-static cvar_t		scr_showpause	= {"showpause","1"};
+static cvar_t		scr_showram		= {"scr_showram","1"};
+static cvar_t		scr_showturtle	= {"scr_showturtle","0"};
+static cvar_t		scr_showpause	= {"scr_showpause","1"};
 static cvar_t		scr_printspeed	= {"scr_printspeed","8"};
-static cvar_t		scr_showfps 	= {"showfps","1" };
+static cvar_t		scr_showfps 	= {"scr_showfps","1"};
 
 static qpic_t		*scr_ram;
 static qpic_t		*scr_net;
@@ -234,8 +234,8 @@ static void SCR_CalcRefdef (void)
 	vrect_t		vrect;
 	float		size;
 
-	scr_fullupdate = 0;		// force a background redraw
-	vid.recalc_refdef = 0;
+	scr_fullupdate = false;		// force a background redraw
+	vid.recalc_refdef = false;
 
 // force the status bar to redraw
 	Sbar_Changed ();
@@ -243,16 +243,16 @@ static void SCR_CalcRefdef (void)
 //========================================
 	
 // bound viewsize
-	if (scr_viewsize.value < 30)
-		Cvar_Set ("viewsize","30");
-	if (scr_viewsize.value > 120)
-		Cvar_Set ("viewsize","120");
+	if (scr_viewsize.value < SCR_MIN_VIEWSIZE)
+		Cvar_SetValue ("scr_viewsize", SCR_MIN_VIEWSIZE);
+	if (scr_viewsize.value > SCR_MAX_VIEWSIZE)
+		Cvar_SetValue ("scr_viewsize", SCR_MAX_VIEWSIZE);
 
 // bound field of view
-	if (scr_fov.value < 10)
-		Cvar_Set ("fov","10");
-	if (scr_fov.value > 170)
-		Cvar_Set ("fov","170");
+	if (scr_fov.value < SCR_MIN_FOV)
+		Cvar_SetValue ("scr_fov", SCR_MIN_FOV);
+	if (scr_fov.value > SCR_MAX_FOV)
+		Cvar_SetValue ("scr_fov", SCR_MAX_FOV);
 
 	r_refdef.fov_x = scr_fov.value;
 	r_refdef.fov_y = CalcFov (r_refdef.fov_x, r_refdef.vrect.width, r_refdef.vrect.height);
@@ -296,15 +296,27 @@ void SCR_SetClearNotify (void)
 
 /*
 =================
+SCR_ChangeSize
+
+Used by menu to increase/decrease screen view size
+=================
+*/
+void SCR_ChangeSize (int dir)
+{
+	Cvar_SetValue ("scr_viewsize", scr_viewsize.value + (dir * 10));
+	vid.recalc_refdef = true;
+}
+
+/*
+=================
 SCR_SizeUp_f
 
 Keybinding command
 =================
 */
-void SCR_SizeUp_f (void)
+static void SCR_SizeUp_f (void)
 {
-	Cvar_SetValue ("viewsize",scr_viewsize.value+10);
-	vid.recalc_refdef = 1;
+	SCR_ChangeSize(1);
 }
 
 
@@ -315,16 +327,46 @@ SCR_SizeDown_f
 Keybinding command
 =================
 */
-void SCR_SizeDown_f (void)
+static void SCR_SizeDown_f (void)
 {
-	Cvar_SetValue ("viewsize",scr_viewsize.value-10);
-	vid.recalc_refdef = 1;
+	SCR_ChangeSize(-1);
 }
 
-static void SCR_Changed_cb (cvar_t *var)
+/*
+==================
+SCR_ViewSize_f
+==================
+*/
+static void SCR_ViewSize_f (void)
 {
+	Cvar_SetFromCommand("scr_viewsize");
 	vid.recalc_refdef = true;
 }
+
+/*
+==================
+SCR_Fov_f
+==================
+*/
+static void SCR_Fov_f (void)
+{
+	Cvar_SetFromCommand("scr_fov");
+	vid.recalc_refdef = true;
+}
+
+/*
+=================
+SCR_GetSize
+
+Used by menu to get screen view size ratio
+returns screen size between 0 and 1
+=================
+*/
+float SCR_GetSize(void)
+{
+	return (scr_viewsize.value - SCR_MIN_VIEWSIZE) / (SCR_MAX_VIEWSIZE - SCR_MIN_VIEWSIZE);
+}
+
 //============================================================================
 
 /*
@@ -344,15 +386,14 @@ void SCR_Init (void)
 	Cvar_RegisterVariable (&scr_printspeed);
 	Cvar_RegisterVariable (&scr_showfps);
 
-	scr_fov.notify = SCR_Changed_cb;
-	scr_viewsize.notify = SCR_Changed_cb;
-
 //
 // register our commands
 //
 	Cmd_AddCommand ("screenshot",SCR_ScreenShot_f);
 	Cmd_AddCommand ("sizeup",SCR_SizeUp_f);
 	Cmd_AddCommand ("sizedown",SCR_SizeDown_f);
+	Cmd_AddCommand ("viewsize", SCR_ViewSize_f);
+	Cmd_AddCommand ("fov", SCR_Fov_f);
 
 	scr_ram = Draw_PicFromWad ("ram");
 	scr_net = Draw_PicFromWad ("net");

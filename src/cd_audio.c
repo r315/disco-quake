@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "dosisms.h"
 
-extern	cvar_t	bgmvolume;
+extern	cvar_t	cd_bgmvolume;
 
 #define ADDRESS_MODE_HSG		0
 #define ADDRESS_MODE_RED_BOOK	1
@@ -527,15 +527,15 @@ void CDAudio_Play(byte track, qboolean looping)
 		return;
 	}
 
-	volume = (int)(bgmvolume.value * 255.0);
+	volume = (int)(cd_bgmvolume.value * 255.0);
 	if (volume < 0)
 	{
-		Cvar_SetValue ("bgmvolume", 0.0);
+		Cvar_SetValue ("cd_bgmvolume", 0.0);
 		volume = 0;
 	}
 	else if (volume > 255)
 	{
-		Cvar_SetValue ("bgmvolume", 1.0);
+		Cvar_SetValue ("cd_bgmvolume", 1.0);
 		volume = 255;
 	}
 	CDAudio_SetVolume (volume);
@@ -769,17 +769,17 @@ void CDAudio_Update(void)
 		}
 	}
 
-	newVolume = (int)(bgmvolume.value * 255.0);
+	newVolume = (int)(cd_bgmvolume.value * 255.0);
 	if (newVolume != cdvolume)
 	{
 		if (newVolume < 0)
 		{
-			Cvar_SetValue ("bgmvolume", 0.0);
+			Cvar_SetValue ("cd_bgmvolume", 0.0);
 			newVolume = 0;
 		}
 		else if (newVolume > 255)
 		{
-			Cvar_SetValue ("bgmvolume", 1.0);
+			Cvar_SetValue ("cd_bgmvolume", 1.0);
 			newVolume = 255;
 		}
 		CDAudio_SetVolume (newVolume);

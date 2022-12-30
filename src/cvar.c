@@ -129,9 +129,6 @@ void Cvar_Set (char *var_name, char *value)
 		if (sv.active)
 			SV_BroadcastPrintf ("\"%s\" changed to \"%s\"\n", var->name, var->string);
 	}
-
-	if (var->notify)
-		var->notify(var);
 }
 
 /*
@@ -229,3 +226,19 @@ void Cvar_WriteVariables (FILE *f)
 			fprintf (f, "%s \"%s\"\n", var->name, var->string);
 }
 
+/*
+==================
+Cvar_SetFromCommand
+
+Sets cvar value through a command
+==================
+*/
+void Cvar_SetFromCommand(const char *name)
+{
+	char *param;
+
+	if (Cmd_Argc() < 2)
+		return;
+
+	Cvar_Set(name, Cmd_Argv(1));
+}

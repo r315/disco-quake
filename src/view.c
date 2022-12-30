@@ -54,14 +54,14 @@ static cvar_t	v_ipitch_level 	= {"v_ipitch_level", "0.3", false};
 
 static cvar_t	v_idlescale 	= {"v_idlescale", "0", false};
 
-static cvar_t	v_crosshair 	= {"crosshair", "0", true};
+static cvar_t	v_crosshair 	= {"v_crosshair", "0", true};
 static cvar_t	cl_crossx 		= {"cl_crossx", "0", false};
 static cvar_t	cl_crossy 		= {"cl_crossy", "0", false};
 
 static cvar_t	v_centermove 	= {"v_centermove", "0.15", false};
 static cvar_t	v_centerspeed 	= {"v_centerspeed","500"};
-static cvar_t	v_gamma 		= {"gamma", "1", true};
-static cvar_t 	v_dlights		= {"dlights", "1" }; // Dynamic lights
+static cvar_t	v_gamma 		= {"v_gamma", "1", true};
+static cvar_t 	v_dlights		= {"v_dlights", "1" }; // Dynamic lights
 
 static cshift_t	cshift_empty	= { {130,80,50}, 0 };
 static cshift_t	cshift_water	= { {130,80,50}, 128 };
@@ -292,7 +292,7 @@ qboolean V_CheckGamma (void)
 	oldgammavalue = v_gamma.value;
 	
 	BuildGammaTable (v_gamma.value);
-	vid.recalc_refdef = 1;				// force a surface cache flush
+	vid.recalc_refdef = true;				// force a surface cache flush
 	
 	return true;
 }
@@ -304,7 +304,7 @@ void V_ChangeGamma (int dir)
 		v_gamma.value = 0.5;
 	if (v_gamma.value > 1)
 		v_gamma.value = 1;
-	Cvar_SetValue ("gamma", v_gamma.value);	
+	Cvar_SetValue ("v_gamma", v_gamma.value);	
 }
 
 float V_GetGamma (void)
@@ -383,6 +383,25 @@ void V_ParseDamage (void)
 	v_dmg_time = v_kicktime.value;
 }
 
+/*
+==================
+V_Gamma_f
+==================
+*/
+static void V_Gamma_f (void)
+{
+	Cvar_SetFromCommand("v_gamma");
+}
+
+/*
+==================
+V_Gamma_f
+==================
+*/
+static void V_Crosshair_f (void)
+{
+	Cvar_SetFromCommand("v_crosshair");
+}
 
 /*
 ==================
@@ -1025,6 +1044,7 @@ void V_RenderView (void)
 		
 }
 
+
 //============================================================================
 
 /*
@@ -1037,6 +1057,8 @@ void V_Init (void)
 	Cmd_AddCommand ("v_cshift", V_cshift_f);	
 	Cmd_AddCommand ("bf", V_BonusFlash_f);
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
+	Cmd_AddCommand ("gamma", V_Gamma_f);
+	Cmd_AddCommand ("crosshair", V_Crosshair_f);
 
 	Cvar_RegisterVariable (&v_centermove);
 	Cvar_RegisterVariable (&v_centerspeed);

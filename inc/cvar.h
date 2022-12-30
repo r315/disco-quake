@@ -61,7 +61,6 @@ typedef struct cvar_s
 	qboolean server;		// notifies players when changed
 	float	value;
 	struct cvar_s *next;
-	void (*notify)(struct cvar_s *);
 } cvar_t;
 
 void 	Cvar_RegisterVariable (cvar_t *variable);
@@ -94,5 +93,8 @@ void 	Cvar_WriteVariables (FILE *f);
 // with the archive flag set to true.
 
 cvar_t *Cvar_FindVar (char *var_name);
+
+void 	Cvar_SetFromCommand(const char *name);
+// 
 
 extern cvar_t	*cvar_vars;

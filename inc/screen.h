@@ -19,6 +19,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // screen.h
 
+#define SCR_MAX_VIEWSIZE    120
+#define SCR_MIN_VIEWSIZE    100
+#define SCR_MAX_FOV         170
+#define SCR_MIN_FOV         10
+
 void SCR_Init (void);
 void SCR_UpdateScreen (void);
 void SCR_SizeUp (void);
@@ -35,6 +40,8 @@ void SCR_SetClearNotify (void);
 int  SCR_GetConsoleSize (void);
 void SCR_SetEnable (qboolean en);
 qboolean SCR_GetEnable (void);
+void SCR_ChangeSize(int dir);
+float SCR_GetSize(void);
 
 extern cvar_t       scr_viewsize;
 extern cvar_t	    scr_fov;
