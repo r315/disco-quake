@@ -30,10 +30,6 @@ entities sent from the server may not include everything in the pvs, especially
 when crossing a water boudnary.
 
 */
-
-cvar_t  		lcd_x 			= {"lcd_x","0"};
-static cvar_t	lcd_yaw 		= {"lcd_yaw","0"};
-
 static cvar_t	scr_ofsx 		= {"scr_ofsx","0", false};
 static cvar_t	scr_ofsy 		= {"scr_ofsy","0", false};
 static cvar_t	scr_ofsz 		= {"scr_ofsz","0", false};
@@ -64,7 +60,7 @@ static cvar_t	cl_crossy 		= {"cl_crossy", "0", false};
 
 static cvar_t	v_centermove 	= {"v_centermove", "0.15", false};
 static cvar_t	v_centerspeed 	= {"v_centerspeed","500"};
-cvar_t			v_gamma 		= {"gamma", "1", true};
+static cvar_t	v_gamma 		= {"gamma", "1", true};
 static cvar_t 	v_dlights		= {"dlights", "1" }; // Dynamic lights
 
 static cshift_t	cshift_empty	= { {130,80,50}, 0 };
@@ -301,7 +297,21 @@ qboolean V_CheckGamma (void)
 	return true;
 }
 
+void V_ChangeGamma (int dir)
+{
+	v_gamma.value -= dir * 0.05;
+	if (v_gamma.value < 0.5)
+		v_gamma.value = 0.5;
+	if (v_gamma.value > 1)
+		v_gamma.value = 1;
+	Cvar_SetValue ("gamma", v_gamma.value);	
+}
 
+float V_GetGamma (void)
+{
+	// return value between 1 and 0.5
+	return (1.0f - v_gamma.value) / 0.5f;
+}
 
 /*
 ===============
@@ -905,13 +915,15 @@ void V_CalcRefdef (void)
 	angles[ROLL] = ent->angles[ROLL];
 
 	AngleVectors (angles, forward, right, up);
+	
+	// don't allow cheats in multiplayer
+	if (cl.maxclients <= 1) 
+		for (i=0 ; i<3 ; i++)
+			r_refdef.vieworg[i] += 
+				scr_ofsx.value * forward[i] +
+				scr_ofsy.value * right[i] +
+				scr_ofsz.value * up[i];
 
-	for (i=0 ; i<3 ; i++)
-		r_refdef.vieworg[i] += scr_ofsx.value*forward[i]
-			+ scr_ofsy.value*right[i]
-			+ scr_ofsz.value*up[i];
-	
-	
 	V_BoundOffsets ();
 		
 // set up gun position
@@ -992,63 +1004,18 @@ void V_RenderView (void)
 	if (con_forcedup)
 		return;
 
-// don't allow cheats in multiplayer
-	if (cl.maxclients > 1)
-	{
-		Cvar_Set ("scr_ofsx", "0");
-		Cvar_Set ("scr_ofsy", "0");
-		Cvar_Set ("scr_ofsz", "0");
-	}
-
 	if (cl.intermission)
 	{	// intermission / finale rendering
 		V_CalcIntermissionRefdef ();	
-	}
-	else
-	{
-		if (!cl.paused /* && (sv.maxclients > 1 || key_dest == key_game) */ )
-			V_CalcRefdef ();
+	}else if (!cl.paused /* && (sv.maxclients > 1 || key_dest == key_game) */ ) {
+		V_CalcRefdef ();
 	}
 
 	if(v_dlights.value){
 		R_PushDlights ();
 	}
-
-	if (lcd_x.value)
-	{
-		//
-		// render two interleaved views
-		//
-		int		i;
-
-		vid.rowbytes <<= 1;
-		vid.aspect *= 0.5;
-
-		r_refdef.viewangles[YAW] -= lcd_yaw.value;
-		for (i=0 ; i<3 ; i++)
-			r_refdef.vieworg[i] -= right[i]*lcd_x.value;
-		R_RenderView ();
-
-		vid.buffer += vid.rowbytes>>1;
-
-		R_PushDlights ();
-
-		r_refdef.viewangles[YAW] += lcd_yaw.value*2;
-		for (i=0 ; i<3 ; i++)
-			r_refdef.vieworg[i] += 2*right[i]*lcd_x.value;
-		R_RenderView ();
-
-		vid.buffer -= vid.rowbytes>>1;
-
-		r_refdef.vrect.height <<= 1;
-
-		vid.rowbytes >>= 1;
-		vid.aspect *= 2;
-	}
-	else
-	{
-		R_RenderView ();
-	}
+	
+	R_RenderView ();	
 
 #ifndef GLQUAKE
 	if (v_crosshair.value)
@@ -1070,9 +1037,6 @@ void V_Init (void)
 	Cmd_AddCommand ("v_cshift", V_cshift_f);	
 	Cmd_AddCommand ("bf", V_BonusFlash_f);
 	Cmd_AddCommand ("centerview", V_StartPitchDrift);
-
-	Cvar_RegisterVariable (&lcd_x);
-	Cvar_RegisterVariable (&lcd_yaw);
 
 	Cvar_RegisterVariable (&v_centermove);
 	Cvar_RegisterVariable (&v_centerspeed);

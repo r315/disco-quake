@@ -1078,13 +1078,9 @@ void M_AdjustSliders (int dir)
 		Cvar_SetValue ("viewsize", scr_viewsize.value);
 		break;
 	case 4:	// gamma
-		v_gamma.value -= dir * 0.05;
-		if (v_gamma.value < 0.5)
-			v_gamma.value = 0.5;
-		if (v_gamma.value > 1)
-			v_gamma.value = 1;
-		Cvar_SetValue ("gamma", v_gamma.value);
+		V_ChangeGamma (dir);
 		break;
+
 	case 5:	// mouse speed
 		sensitivity.value += dir * 0.5;
 		if (sensitivity.value < 1)
@@ -1093,9 +1089,11 @@ void M_AdjustSliders (int dir)
 			sensitivity.value = 11;
 		Cvar_SetValue ("sensitivity", sensitivity.value);
 		break;
+
 	case 6:	// music volume
 		CDAudio_ChangeVolume(dir);
 		break;
+
 	case 7:	// sfx volume
 		S_ChangeVolume(dir);
 		break;
@@ -1165,7 +1163,7 @@ void M_DrawCheckbox (int x, int y, int on)
 
 void M_Options_Draw (void)
 {
-	float		r;
+	float	r;
 	qpic_t	*p;
 
 	M_DrawTransPic (16, 4, Draw_CachePic ("gfx/qplaque.lmp") );
@@ -1181,7 +1179,7 @@ void M_Options_Draw (void)
 	M_DrawSlider (220, 56, r);
 
 	M_Print (16, 64, "            Brightness");
-	r = (1.0 - v_gamma.value) / 0.5;
+	r = V_GetGamma ();
 	M_DrawSlider (220, 64, r);
 
 	M_Print (16, 72, "           Mouse Speed");
