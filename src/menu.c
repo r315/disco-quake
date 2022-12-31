@@ -1070,7 +1070,7 @@ void M_AdjustSliders (int dir)
 	switch (options_cursor)
 	{
 	case 3:	// screen size
-		SCR_ChangeSize (dir);
+		SCR_ChangeViewSize (dir);
 		break;
 
 	case 4:	// gamma

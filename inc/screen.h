@@ -35,13 +35,13 @@ void SCR_EndLoadingPlaque (void);
 int  SCR_ModalMessage (char *text);
 void SCR_SetFullUpdate (void);      // Fill screen with background texture and copy full view to video buffer
 void SCR_SetTopCopy (void);         // Copy screen part above status bar to video buffer
-void SCR_SetFullCopy (void);        // Copy full screen to video buffer
 void SCR_SetClearNotify (void);
 int  SCR_GetConsoleSize (void);
 void SCR_SetEnable (qboolean en);
 qboolean SCR_GetEnable (void);
-void SCR_ChangeSize(int dir);
-float SCR_GetSize(void);
+void SCR_ChangeViewSize (int dir);
+float SCR_GetSize (void);
+void SCR_Changed (void);
 
 extern cvar_t       scr_viewsize;
 extern cvar_t	    scr_fov;

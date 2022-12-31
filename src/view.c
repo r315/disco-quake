@@ -292,7 +292,7 @@ qboolean V_CheckGamma (void)
 	oldgammavalue = v_gamma.value;
 	
 	BuildGammaTable (v_gamma.value);
-	vid.recalc_refdef = true;				// force a surface cache flush
+	SCR_Changed ();				// force a surface cache flush
 	
 	return true;
 }
