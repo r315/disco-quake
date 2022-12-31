@@ -34,7 +34,6 @@ void SCR_BeginLoadingPlaque (void);
 void SCR_EndLoadingPlaque (void);
 int  SCR_ModalMessage (char *text);
 void SCR_SetFullUpdate (void);      // Fill screen with background texture and copy full view to video buffer
-void SCR_SetTopCopy (void);         // Copy screen part above status bar to video buffer
 void SCR_SetClearNotify (void);
 int  SCR_GetConsoleSize (void);
 void SCR_SetEnable (qboolean en);

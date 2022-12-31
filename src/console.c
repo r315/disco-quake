@@ -539,7 +539,6 @@ void Con_DrawNotify (void)
 		text = con_text + (i % con_totallines)*con_linewidth;
 		
 		SCR_SetClearNotify ();
-		SCR_SetTopCopy ();
 
 		for (x = 0 ; x < con_linewidth ; x++)
 			Draw_Character ( (x+1)<<3, v, text[x]);
@@ -551,7 +550,6 @@ void Con_DrawNotify (void)
 	if (key_dest == key_message)
 	{
 		SCR_SetClearNotify ();
-		SCR_SetTopCopy();
 	
 		x = 0;
 		

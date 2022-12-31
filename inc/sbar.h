@@ -37,3 +37,6 @@ void Sbar_IntermissionOverlay (void);
 // called each frame after the level has been completed
 
 void Sbar_FinaleOverlay (void);
+
+qboolean Sbar_HasChanged (void);
+// tells if sbar needs to be redraw into screen

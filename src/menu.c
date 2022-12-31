@@ -316,6 +316,7 @@ void M_Main_Key (int key)
 		cls.demonum = m_save_demonum;
 		if (cls.demonum != -1 && !cls.demoplayback && cls.state != ca_connected)
 			CL_NextDemo ();
+		SCR_SetFullUpdate ();
 		break;
 
 	case K_DOWNARROW:

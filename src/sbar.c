@@ -21,10 +21,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 
-
-int			sb_updates;		// if >= vid.numpages, no update needed
-
 #define STAT_MINUS		10	// num frame for '-' stats digit
+
 qpic_t		*sb_nums[2][11];
 qpic_t		*sb_colon, *sb_slash;
 qpic_t		*sb_ibar;
@@ -46,6 +44,7 @@ qpic_t	*sb_face_invis_invuln;
 
 qboolean	sb_showscores;
 
+static qboolean		sb_update;	// Flags if status bar needs to be updated
 int			sb_lines;			// scan lines to draw
 
 qpic_t      *rsb_invbar[2];
@@ -61,9 +60,17 @@ int         hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMIT
 //MED 01/04/97 added hipnotic items array
 qpic_t      *hsb_items[2];
 
+int		fragsort[MAX_SCOREBOARD];
+
+char	scoreboardtext[MAX_SCOREBOARD][20];
+int		scoreboardtop[MAX_SCOREBOARD];
+int		scoreboardbottom[MAX_SCOREBOARD];
+int		scoreboardcount[MAX_SCOREBOARD];
+int		scoreboardlines;
+
+
 void Sbar_MiniDeathmatchOverlay (void);
 void Sbar_DeathmatchOverlay (void);
-void M_DrawPic (int x, int y, qpic_t *pic);
 
 /*
 ===============
@@ -77,7 +84,7 @@ void Sbar_ShowScores (void)
 	if (sb_showscores)
 		return;
 	sb_showscores = true;
-	sb_updates = 0;
+	sb_update = true;
 }
 
 /*
@@ -90,7 +97,7 @@ Tab key up
 void Sbar_DontShowScores (void)
 {
 	sb_showscores = false;
-	sb_updates = 0;
+	sb_update = true;
 }
 
 /*
@@ -100,7 +107,17 @@ Sbar_Changed
 */
 void Sbar_Changed (void)
 {
-	sb_updates = 0;	// update next frame
+	sb_update = true;
+}
+
+/*
+===============
+Sbar_HasChanged
+===============
+*/
+qboolean Sbar_HasChanged (void)
+{
+	return sb_update;
 }
 
 /*
@@ -375,14 +392,6 @@ void Sbar_DrawNum (int x, int y, int num, int digits, int color)
 
 //=============================================================================
 
-int		fragsort[MAX_SCOREBOARD];
-
-char	scoreboardtext[MAX_SCOREBOARD][20];
-int		scoreboardtop[MAX_SCOREBOARD];
-int		scoreboardbottom[MAX_SCOREBOARD];
-int		scoreboardcount[MAX_SCOREBOARD];
-int		scoreboardlines;
-
 /*
 ===============
 Sbar_SortFrags
@@ -582,7 +591,7 @@ void Sbar_DrawInventory (void)
          Sbar_DrawPic (i*24, -16, sb_weapons[flashon][i]);
 
 			if (flashon > 1)
-				sb_updates = 0;		// force update to remove flash
+				sb_update = true;
 		}
 	}
 
@@ -638,7 +647,7 @@ void Sbar_DrawInventory (void)
             else
                Sbar_DrawPic (176 + (i*24), -16, hsb_weapons[flashon][i]);
             if (flashon > 1)
-               sb_updates = 0;      // force update to remove flash
+               sb_update = true;
          }
       }
     }
@@ -678,7 +687,7 @@ void Sbar_DrawInventory (void)
          time = cl.item_gettime[17+i];
          if (time && time > cl.time - 2 && flashon )
          {  // flash frame
-            sb_updates = 0;
+            sb_update = true;
          }
          else
          {
@@ -689,7 +698,7 @@ void Sbar_DrawInventory (void)
             }
          }
          if (time && time > cl.time - 2)
-            sb_updates = 0;
+            sb_update = true;
       }
    //MED 01/04/97 added hipnotic items
    // hipnotic items
@@ -701,14 +710,14 @@ void Sbar_DrawInventory (void)
             time = cl.item_gettime[24+i];
             if (time && time > cl.time - 2 && flashon )
             {  // flash frame
-               sb_updates = 0;
+               sb_update = true;
             }
             else
             {
                Sbar_DrawPic (288 + i*16, -16, hsb_items[i]);
             }
             if (time && time > cl.time - 2)
-               sb_updates = 0;
+               sb_update = true;
          }
    }
 
@@ -723,7 +732,7 @@ void Sbar_DrawInventory (void)
 
 				if (time &&	time > cl.time - 2 && flashon )
 				{	// flash frame
-					sb_updates = 0;
+					sb_update = true;
 				}
 				else
 				{
@@ -731,7 +740,7 @@ void Sbar_DrawInventory (void)
 				}
 
 				if (time &&	time > cl.time - 2)
-					sb_updates = 0;
+					sb_update = true;
 			}
 		}
 	}
@@ -745,12 +754,12 @@ void Sbar_DrawInventory (void)
 				time = cl.item_gettime[28+i];
 				if (time &&	time > cl.time - 2 && flashon )
 				{	// flash frame
-					sb_updates = 0;
+					sb_update = true;
 				}
 				else
 					Sbar_DrawPic (320-32 + i*8, -16, sb_sigil[i]);
 				if (time &&	time > cl.time - 2)
-					sb_updates = 0;
+					sb_update = true;
 			}
 		}
 	}
@@ -911,7 +920,7 @@ void Sbar_DrawFace (void)
 	if (cl.time <= cl.faceanimtime)
 	{
 		anim = 1;
-		sb_updates = 0;		// make sure the anim gets drawn over
+		sb_update = true;
 	}
 	else
 		anim = 0;
@@ -928,17 +937,12 @@ void Sbar_Draw (void)
 	if (SCR_GetConsoleSize () == vid.height)
 		return;		// console is full screen
 
-	if (sb_updates >= vid.numpages)
-		return;
+	if (!sb_update)
+		return;		// nothing has changed
 
-	SCR_SetFullCopy ();
+	sb_update = false;
 
-	sb_updates++;
-
-	if (sb_lines && vid.width > WARP_WIDTH) 
-		Draw_TileClear (0, vid.height - sb_lines, vid.width, sb_lines);
-
-	if (sb_lines > 24)
+	if (sb_lines > SBAR_HEIGHT)
 	{
 		Sbar_DrawInventory ();
 		if (cl.maxclients != 1)
@@ -949,10 +953,11 @@ void Sbar_Draw (void)
 	{
 		Sbar_DrawPic (0, 0, sb_scorebar);
 		Sbar_DrawScoreboard ();
-		sb_updates = 0;
+		sb_update = true;
 	}
 	else if (sb_lines)
 	{
+		// Background
 		Sbar_DrawPic (0, 0, sb_sbar);
 
    		// keys (hipnotic only)

@@ -39,9 +39,10 @@ typedef struct pcx_s
     unsigned char	data;			// unbounded
 } pcx_t;
 
+typedef enum { CPY_ALL, CPY_TOP, CPY_SB } scrcopy_t;
+
 // only the refresh window will be updated unless these variables are flagged 
-static qboolean		scr_copytop;
-static qboolean		scr_copyeverything;
+static scrcopy_t	scr_copy;
 
 static int			scr_con_current;	// console current scan lines
 static int			scr_conlines;		// lines of console to display
@@ -61,7 +62,6 @@ static qpic_t		*scr_ram;
 static qpic_t		*scr_net;
 static qpic_t		*scr_turtle;
 
-static int			scr_fullupdate;		// set to 0 to force full redraw
 static int			scr_clearnotify;	// set to 0 whenever notify text is drawn
 static int			scr_clearconsole;
 
@@ -130,7 +130,6 @@ void SCR_EraseCenterString (void)
 	else
 		y = 48;
 
-	scr_copytop = true;
 	Draw_TileClear (0, y,vid.width, 8*scr_erase_lines);
 }
 
@@ -183,7 +182,6 @@ void SCR_DrawCenterString (void)
 
 void SCR_CheckDrawCenterString (void)
 {
-	scr_copytop = true;
 	if (scr_center_lines > scr_erase_lines)
 		scr_erase_lines = scr_center_lines;
 
@@ -234,11 +232,7 @@ static void SCR_CalcRefdef (void)
 	vrect_t		vrect;
 	float		size;
 
-	scr_fullupdate = false;		// force a background redraw
 	vid.recalc_refdef = false;
-
-// force the status bar to redraw
-	Sbar_Changed ();
 
 //========================================
 	
@@ -296,12 +290,23 @@ void SCR_SetClearNotify (void)
 
 /*
 =================
-SCR_ChangeSize
+SCR_Changed 
+
+=================
+*/
+void SCR_Changed (void)
+{
+	vid.recalc_refdef = true;
+}
+
+/*
+=================
+SCR_ChangeViewSize
 
 Used by menu to increase/decrease screen view size
 =================
 */
-void SCR_ChangeSize (int dir)
+void SCR_ChangeViewSize (int dir)
 {
 	Cvar_SetValue ("scr_viewsize", scr_viewsize.value + (dir * 10));
 	vid.recalc_refdef = true;
@@ -316,7 +321,7 @@ Keybinding command
 */
 static void SCR_SizeUp_f (void)
 {
-	SCR_ChangeSize(1);
+	SCR_ChangeViewSize(1);
 }
 
 
@@ -329,12 +334,14 @@ Keybinding command
 */
 static void SCR_SizeDown_f (void)
 {
-	SCR_ChangeSize(-1);
+	SCR_ChangeViewSize(-1);
 }
 
 /*
 ==================
 SCR_ViewSize_f
+
+cvar bind command
 ==================
 */
 static void SCR_ViewSize_f (void)
@@ -346,6 +353,8 @@ static void SCR_ViewSize_f (void)
 /*
 ==================
 SCR_Fov_f
+
+cvar bind command
 ==================
 */
 static void SCR_Fov_f (void)
@@ -545,13 +554,11 @@ void SCR_SetUpToDrawConsole (void)
 
 	if (scr_clearconsole++ < vid.numpages)
 	{
-		scr_copytop = true;
 		Draw_TileClear (0,(int)scr_con_current,vid.width, vid.height - (int)scr_con_current);
 		Sbar_Changed ();
 	}
 	else if (scr_clearnotify++ < vid.numpages)
 	{
-		scr_copytop = true;
 		Draw_TileClear (0,0,vid.width, con_notifylines);
 	}
 	else
@@ -566,8 +573,7 @@ SCR_DrawConsole
 void SCR_DrawConsole (void)
 {
 	if (scr_con_current)
-	{
-		scr_copyeverything = true;
+	{	
 		Con_DrawConsole (scr_con_current, true);
 		scr_clearconsole = 0;
 	}
@@ -688,14 +694,11 @@ void SCR_ScreenShot_f (void)
 // 
 // save the pcx file 
 // 
-	D_EnableBackBufferAccess ();	// enable direct drawing of console to back
-									//  buffer
+
 
 	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
 				  host_basepal);
 
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									//  for linear writes all the time
 
 	Con_Printf ("Wrote %s\n", pcxname);
 } 
@@ -725,14 +728,12 @@ void SCR_BeginLoadingPlaque (void)
 	scr_con_current = 0;
 
 	scr_drawloading = true;
-	scr_fullupdate = 0;
 	Sbar_Changed ();
 	SCR_UpdateScreen ();
 	scr_drawloading = false;
 
 	scr_enable = false;
 	scr_disabled_time = realtime;
-	scr_fullupdate = 0;
 }
 
 /*
@@ -744,7 +745,6 @@ SCR_EndLoadingPlaque
 void SCR_EndLoadingPlaque (void)
 {
 	scr_enable = true;
-	scr_fullupdate = 0;
 	Con_ClearNotify ();
 }
 
@@ -798,7 +798,6 @@ int SCR_ModalMessage (char *text)
 	scr_notifystring = text;
  
 // draw a fresh screen
-	scr_fullupdate = 0;
 	scr_drawdialog = true;
 	SCR_UpdateScreen ();
 	scr_drawdialog = false;
@@ -811,7 +810,6 @@ int SCR_ModalMessage (char *text)
 		Sys_SendKeyEvents ();
 	} while (key_lastpress != 'y' && key_lastpress != 'n' && key_lastpress != K_ESCAPE);
 
-	scr_fullupdate = 0;
 	SCR_UpdateScreen ();
 
 	return key_lastpress == 'y';
@@ -899,9 +897,6 @@ void SCR_UpdateScreen (void)
 {
 	vrect_t		vrect;
 
-	scr_copytop = false;
-	scr_copyeverything = false;
-
 	if (!scr_enable)
 	{
 		if (realtime - scr_disabled_time > 60)
@@ -913,50 +908,62 @@ void SCR_UpdateScreen (void)
 			return;
 	}
 
-	if (cls.state == ca_dedicated)
-		return;				// stdout only
+	//
+	// Update only if requirements are met
+	//
 
-	if (!scr_initialized || !con_initialized)
-		return;				// not initialized yet
-	
+	if (cls.state == ca_dedicated || !scr_initialized || !con_initialized)
+		return;
+
+	//
+	// Check if screen size has changed
+	//
+
 	if (vid.recalc_refdef)
 	{
 		// something changed, so reorder the screen
 		SCR_CalcRefdef ();
+
+		// force the status bar to redraw
+		Sbar_Changed ();
+		scr_copy = CPY_ALL;
+	}
+
+	//
+	// If something requested full update, then fill in status bar backgound
+	//
+
+	if (scr_copy == CPY_ALL) {
+		Draw_TileClear(0, vid.height - sb_lines, vid.width, sb_lines);
 	}
 
 	//
 	// do 3D refresh drawing, and then update the screen
 	//
-	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
-
-	if (scr_fullupdate++ < vid.numpages)
-	{	// clear the entire screen
-		scr_copyeverything = true;
-		Draw_TileClear (0, 0, vid.width, vid.height);
-		Sbar_Changed ();
-	}
 
 	SCR_SetUpToDrawConsole ();
 	SCR_EraseCenterString ();
 
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									//  for linear writes all the time
-
-	VID_LockBuffer (); // Unused
-
 	V_RenderView ();
 
-	VID_UnlockBuffer (); // Unused
+	//
+	// Full copy is something has changed on status bar
+	//
 
-	D_EnableBackBufferAccess ();	// of all overlay stuff if drawing directly
+	if (Sbar_HasChanged()) {
+		scr_copy = CPY_ALL;
+	}
+
+	// 
+	// Handle edge cases and draw screen accordingly
+	//
 
 	if (scr_drawdialog)
 	{
+	// Fade screen when asked something to player like starting new game when already in game
 		Sbar_Draw ();
 		Draw_FadeScreen ();
 		SCR_DrawNotifyString ();
-		scr_copyeverything = true;
 	}
 	else if (scr_drawloading)
 	{
@@ -990,23 +997,21 @@ void SCR_UpdateScreen (void)
 	
 	SCR_DrawFps();	
 
-	D_DisableBackBufferAccess ();	// for adapters that can't stay mapped in
-									// for linear writes all the time
 	V_UpdatePalette ();
 
 //
 // update one of three areas
 //
 
-	if (scr_copyeverything)
+	if (scr_copy == CPY_ALL)
 	{
 		vrect.x = 0;
 		vrect.y = 0;
 		vrect.width = vid.width;
 		vrect.height = vid.height;
-
+		scr_copy = CPY_TOP;
 	}
-	else if (scr_copytop)
+	else if (scr_copy == CPY_TOP)
 	{
 		vrect.x = 0;
 		vrect.y = 0;
@@ -1033,18 +1038,8 @@ SCR_SetFullUpdate
 */
 void SCR_SetFullUpdate (void)
 {
-	scr_copyeverything = true;
-	scr_fullupdate = 0;
-}
-
-void SCR_SetTopCopy (void)
-{
-	scr_copytop = true;
-}
-
-void SCR_SetFullCopy (void)
-{
-	scr_copyeverything = true;
+	scr_copy = CPY_ALL;
+	Sbar_Changed();
 }
 
 int SCR_GetConsoleSize (void)
