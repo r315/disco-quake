@@ -253,16 +253,16 @@ static void SCR_CalcRefdef (void)
 
 // intermission is always full screen	
 	if (cl.intermission)
-		size = 120;
+		size = SCR_MAX_VIEWSIZE;
 	else
 		size = scr_viewsize.value;
 
-	if (size >= 120)
-		sb_lines = 0;		// no status bar at all
-	else if (size >= 110)
-		sb_lines = 24;		// no inventory
+	if (size >= SCR_MAX_VIEWSIZE)
+		sb_lines = 0;				// no status bar at all
+	else if (size >= SCR_MAX_VIEWSIZE - 10)
+		sb_lines = SBAR_HEIGHT;		// no inventory
 	else
-		sb_lines = 24+16+8;
+		sb_lines = SBAR_HEIGHT + 16 + 8;
 
 // these calculations mirror those in R_Init() for r_refdef, but take no
 // account of water warping

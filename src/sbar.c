@@ -23,50 +23,52 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #define STAT_MINUS		10	// num frame for '-' stats digit
 
-qpic_t		*sb_nums[2][11];
-qpic_t		*sb_colon, *sb_slash;
-qpic_t		*sb_ibar;
-qpic_t		*sb_sbar;
-qpic_t		*sb_scorebar;
+static qpic_t		*sb_nums[2][11];
+static qpic_t		*sb_colon, *sb_slash;
+static qpic_t		*sb_ibar;
+static qpic_t		*sb_sbar;
+static qpic_t		*sb_scorebar;
 
-qpic_t      *sb_weapons[7][8];   // 0 is active, 1 is owned, 2-5 are flashes
-qpic_t      *sb_ammo[4];
-qpic_t		*sb_sigil[4];
-qpic_t		*sb_armor[3];
-qpic_t		*sb_items[32];
+static qpic_t 		*sb_weapons[7][8];   // 0 is active, 1 is owned, 2-5 are flashes
+static qpic_t		*sb_ammo[4];
+static qpic_t		*sb_sigil[4];
+static qpic_t		*sb_armor[3];
+static qpic_t		*sb_items[32];
 
-qpic_t	*sb_faces[7][2];		// 0 is gibbed, 1 is dead, 2-6 are alive
+static qpic_t		*sb_faces[7][2];		// 0 is gibbed, 1 is dead, 2-6 are alive
 							// 0 is static, 1 is temporary animation
-qpic_t	*sb_face_invis;
-qpic_t	*sb_face_quad;
-qpic_t	*sb_face_invuln;
-qpic_t	*sb_face_invis_invuln;
+static qpic_t		*sb_face_invis;
+static qpic_t		*sb_face_quad;
+static qpic_t		*sb_face_invuln;
+static qpic_t		*sb_face_invis_invuln;
 
-qboolean	sb_showscores;
-
-static qboolean		sb_update;	// Flags if status bar needs to be updated
-int			sb_lines;			// scan lines to draw
-
-qpic_t      *rsb_invbar[2];
-qpic_t      *rsb_weapons[5];
-qpic_t      *rsb_items[2];
-qpic_t      *rsb_ammo[3];
-qpic_t      *rsb_teambord;		// PGM 01/19/97 - team color border
+static qpic_t		*rsb_invbar[2];
+static qpic_t		*rsb_weapons[5];
+static qpic_t		*rsb_items[2];
+static qpic_t		*rsb_ammo[3];
+static qpic_t		*rsb_teambord;		// PGM 01/19/97 - team color border
 
 //MED 01/04/97 added two more weapons + 3 alternates for grenade launcher
-qpic_t      *hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
+static qpic_t		*hsb_weapons[7][5];   // 0 is active, 1 is owned, 2-5 are flashes
 //MED 01/04/97 added array to simplify weapon parsing
-int         hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMITY_GUN_BIT};
+static int			hipweapons[4] = {HIT_LASER_CANNON_BIT,HIT_MJOLNIR_BIT,4,HIT_PROXIMITY_GUN_BIT};
 //MED 01/04/97 added hipnotic items array
-qpic_t      *hsb_items[2];
+static qpic_t		*hsb_items[2];
 
-int		fragsort[MAX_SCOREBOARD];
+static int			fragsort[MAX_SCOREBOARD];
 
-char	scoreboardtext[MAX_SCOREBOARD][20];
-int		scoreboardtop[MAX_SCOREBOARD];
-int		scoreboardbottom[MAX_SCOREBOARD];
-int		scoreboardcount[MAX_SCOREBOARD];
-int		scoreboardlines;
+static qboolean		sb_showscores;
+static qboolean		sb_update;		// Flags if status bar needs to be updated
+int					sb_lines;		// scan lines to draw
+
+static cvar_t 		sb_alwayson = {"sb_alwayson", "0", true};
+static cvar_t 		sb_transparent = {"sb_transparent", "0", true};
+
+static char		scoreboardtext[MAX_SCOREBOARD][20];
+static int		scoreboardtop[MAX_SCOREBOARD];
+static int		scoreboardbottom[MAX_SCOREBOARD];
+static int		scoreboardcount[MAX_SCOREBOARD];
+static int		scoreboardlines;
 
 
 void Sbar_MiniDeathmatchOverlay (void);
@@ -79,7 +81,7 @@ Sbar_ShowScores
 Tab key down
 ===============
 */
-void Sbar_ShowScores (void)
+void Sbar_ShowScores_f (void)
 {
 	if (sb_showscores)
 		return;
@@ -94,7 +96,7 @@ Sbar_DontShowScores
 Tab key up
 ===============
 */
-void Sbar_DontShowScores (void)
+void Sbar_DontShowScores_f (void)
 {
 	sb_showscores = false;
 	sb_update = true;
@@ -205,8 +207,10 @@ void Sbar_Init (void)
 	sb_face_invis_invuln = Draw_PicFromWad ("face_inv2");
 	sb_face_quad = Draw_PicFromWad ("face_quad");
 
-	Cmd_AddCommand ("+showscores", Sbar_ShowScores);
-	Cmd_AddCommand ("-showscores", Sbar_DontShowScores);
+	Cvar_RegisterVariable (&sb_alwayson);
+	Cvar_RegisterVariable (&sb_transparent);
+	Cmd_AddCommand ("+showscores", Sbar_ShowScores_f);
+	Cmd_AddCommand ("-showscores", Sbar_DontShowScores_f);
 
 	sb_sbar = Draw_PicFromWad ("sbar");
 	sb_ibar = Draw_PicFromWad ("ibar");
@@ -940,7 +944,8 @@ void Sbar_Draw (void)
 	if (!sb_update)
 		return;		// nothing has changed
 
-	sb_update = false;
+	if(!sb_alwayson.value)
+		sb_update = false;
 
 	if (sb_lines > SBAR_HEIGHT)
 	{
@@ -955,11 +960,13 @@ void Sbar_Draw (void)
 		Sbar_DrawScoreboard ();
 		sb_update = true;
 	}
-	else if (sb_lines)
+	else if (sb_lines || sb_alwayson.value)
 	{
 		// Background
-		Sbar_DrawPic (0, 0, sb_sbar);
-
+		if(!sb_transparent.value){
+			Sbar_DrawPic (0, 0, sb_sbar);
+		}
+#if 0
    		// keys (hipnotic only)
       	//MED 01/04/97 moved keys here so they would not be overwritten
       	if (hipnotic)
@@ -969,6 +976,7 @@ void Sbar_Draw (void)
          	if (cl.items & IT_KEY2)
             	Sbar_DrawPic (209, 12, sb_items[1]);
       	}
+#endif
    		// armor
 		if (cl.items & IT_INVULNERABILITY)
 		{
@@ -977,6 +985,7 @@ void Sbar_Draw (void)
 		}
 		else
 		{
+#if 0			
 			if (rogue)
 			{
 				Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3,
@@ -989,6 +998,7 @@ void Sbar_Draw (void)
 					Sbar_DrawPic (0, 0, sb_armor[0]);
 			}
 			else
+#endif
 			{
 				Sbar_DrawNum (24, 0, cl.stats[STAT_ARMOR], 3
 				, cl.stats[STAT_ARMOR] <= 25);
@@ -1007,7 +1017,7 @@ void Sbar_Draw (void)
 		// health
 		Sbar_DrawNum (136, 0, cl.stats[STAT_HEALTH], 3
 		, cl.stats[STAT_HEALTH] <= 25);
-
+#if 0
 		// ammo icon
 		if (rogue)
 		{
@@ -1027,6 +1037,7 @@ void Sbar_Draw (void)
 				Sbar_DrawPic (224, 0, rsb_ammo[2]);
 		}
 		else
+#endif
 		{
 			if (cl.items & IT_SHELLS)
 				Sbar_DrawPic (224, 0, sb_ammo[0]);
@@ -1272,6 +1283,7 @@ void Sbar_IntermissionOverlay (void)
 	qpic_t	*pic;
 	int		dig;
 	int		num;
+	int 	x, y;
 
 	SCR_SetFullUpdate ();
 
@@ -1281,27 +1293,30 @@ void Sbar_IntermissionOverlay (void)
 		return;
 	}
 
+	x = (vid.width / 2);
+	y = 24;
+
 	pic = Draw_CachePic ("gfx/complete.lmp");
-	Draw_Pic (64, 24, pic);
+	Draw_Pic (x - 96, y, pic);
 
 	pic = Draw_CachePic ("gfx/inter.lmp");
-	Draw_TransPic (0, 56, pic);
+	Draw_TransPic (x - 160, y + 32, pic);
 
 // time
 	dig = cl.completed_time/60;
-	Sbar_IntermissionNumber (160, 64, dig, 3, 0);
-	num = cl.completed_time - dig*60;
-	Draw_TransPic (234,64,sb_colon);
-	Draw_TransPic (246,64,sb_nums[0][num/10]);
-	Draw_TransPic (266,64,sb_nums[0][num%10]);
-
-	Sbar_IntermissionNumber (160, 104, cl.stats[STAT_SECRETS], 3, 0);
-	Draw_TransPic (232,104,sb_slash);
-	Sbar_IntermissionNumber (240, 104, cl.stats[STAT_TOTALSECRETS], 3, 0);
-
-	Sbar_IntermissionNumber (160, 144, cl.stats[STAT_MONSTERS], 3, 0);
-	Draw_TransPic (232,144,sb_slash);
-	Sbar_IntermissionNumber (240, 144, cl.stats[STAT_TOTALMONSTERS], 3, 0);
+	Sbar_IntermissionNumber (x, y + 40, dig, 3, 0);
+	num = cl.completed_time - dig * 60;
+	Draw_TransPic (x + 74, y + 40,sb_colon);
+	Draw_TransPic (x + 86, y + 40,sb_nums[0][num/10]);
+	Draw_TransPic (x + 106, y + 40,sb_nums[0][num%10]);
+// Secrets
+	Sbar_IntermissionNumber (x, y + 80, cl.stats[STAT_SECRETS], 3, 0);
+	Draw_TransPic (x + 72, y + 80,sb_slash);
+	Sbar_IntermissionNumber (x + 80, y + 80, cl.stats[STAT_TOTALSECRETS], 3, 0);
+// Monsters
+	Sbar_IntermissionNumber (x, y + 120, cl.stats[STAT_MONSTERS], 3, 0);
+	Draw_TransPic (x + 72, y + 120,sb_slash);
+	Sbar_IntermissionNumber (x + 80, y + 120, cl.stats[STAT_TOTALMONSTERS], 3, 0);
 
 }
 
