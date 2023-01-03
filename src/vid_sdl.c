@@ -14,11 +14,11 @@ viddef_t    vid;                // global video state
 unsigned short  d_8to16table[256];
 
 // The original defaults
-//#define    BASEWIDTH    320
-//#define    BASEHEIGHT   200
+//#define    CANVAS_WIDTH    320
+//#define    CANVAS_HEIGHT   200
 // Much better for high resolution displays
-#define    BASEWIDTH    (WARP_WIDTH * 2)
-#define    BASEHEIGHT   (WARP_HEIGHT * 2)
+#define    CANVAS_WIDTH    (WARP_WIDTH * 3)
+#define    CANVAS_HEIGHT   (WARP_HEIGHT * 3)
 
 int    VGA_width, VGA_height, VGA_rowbytes, VGA_bufferrowbytes = 0;
 byte    *VGA_pagebase;
@@ -64,8 +64,8 @@ void    VID_Init (unsigned char *palette)
         Sys_Error("VID: Couldn't load SDL: %s", SDL_GetError());
 
     // Set up display mode (width and height)
-    vid.width = BASEWIDTH;
-    vid.height = BASEHEIGHT;
+    vid.width = CANVAS_WIDTH;
+    vid.height = CANVAS_HEIGHT;
     vid.maxwarpwidth = WARP_WIDTH;
     vid.maxwarpheight = WARP_HEIGHT;
     if ((pnum=COM_CheckParm("-winsize")))
@@ -91,7 +91,7 @@ void    VID_Init (unsigned char *palette)
     // now know everything we need to know about the buffer
     VGA_width = vid.conwidth = vid.width;
     VGA_height = vid.conheight = vid.height;
-    vid.aspect = ((float)vid.height / (float)vid.width) * (320.0 / 240.0);
+    vid.aspect = ((float)vid.height / (float)vid.width) * ((float)WARP_WIDTH/ WARP_HEIGHT);
     vid.numpages = 1;
     vid.colormap = host_colormap;
     vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));

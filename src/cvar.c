@@ -235,10 +235,8 @@ Sets cvar value through a command
 */
 void Cvar_SetFromCommand(const char *name)
 {
-	char *param;
-
 	if (Cmd_Argc() < 2)
 		return;
 
-	Cvar_Set(name, Cmd_Argv(1));
+	Cvar_Set((char*)name, Cmd_Argv(1));
 }

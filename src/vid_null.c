@@ -22,12 +22,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "quakedef.h"
 #include "d_local.h"
 
-#define	BASEWIDTH	320
-#define	BASEHEIGHT	200
+#define	CANVAS_WIDTH	320
+#define	CANVAS_HEIGHT	200
 
 viddef_t vid;				// global video state
-byte vid_buffer[BASEWIDTH*BASEHEIGHT];
-short zbuffer[BASEWIDTH*BASEHEIGHT];
+byte vid_buffer[CANVAS_WIDTH*CANVAS_HEIGHT];
+short zbuffer[CANVAS_WIDTH*CANVAS_HEIGHT];
 byte surfcache[256*1024];
 #ifdef _WIN32
 #include "winquake.h"
@@ -44,14 +44,14 @@ void VID_ShiftPalette (unsigned char *palette) {}
 
 void VID_Init (unsigned char *palette)
 {
-	vid.maxwarpwidth = vid.width = vid.conwidth = BASEWIDTH;
-	vid.maxwarpheight = vid.height = vid.conheight = BASEHEIGHT;
+	vid.maxwarpwidth = vid.width = vid.conwidth = CANVAS_WIDTH;
+	vid.maxwarpheight = vid.height = vid.conheight = CANVAS_HEIGHT;
 	vid.aspect = 1.0;
 	vid.numpages = 1;
 	vid.colormap = host_colormap;
 	vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
 	vid.buffer = vid.conbuffer = vid_buffer;
-	vid.rowbytes = vid.conrowbytes = BASEWIDTH;
+	vid.rowbytes = vid.conrowbytes = CANVAS_WIDTH;
 	
 	d_pzbuffer = zbuffer;
 	D_InitCaches (surfcache, sizeof(surfcache));

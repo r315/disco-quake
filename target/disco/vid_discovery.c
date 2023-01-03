@@ -23,8 +23,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "stm32f769i_discovery_lcd.h"
 #include "discovery.h"
 
-#define	BASEWIDTH	320 //480
-#define	BASEHEIGHT	200 //320
+#define	CANVAS_WIDTH	320 //480
+#define	CANVAS_HEIGHT	200 //320
 
 #define VIDEO_LAYER_WINDOW	0
 #define VID_DRAW_PALETTE	1
@@ -35,7 +35,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #if VIDEO_LAYER_WINDOW
 #define VIDEO_WINDOW		VIDEO_LAYER_BASE
 #else
-#define VIDEO_WINDOW		(VIDEO_LAYER_BASE + ( (((800 - BASEWIDTH)/2) + ((480 - BASEHEIGHT) * 400)) * 4))
+#define VIDEO_WINDOW		(VIDEO_LAYER_BASE + ( (((800 - CANVAS_WIDTH)/2) + ((480 - CANVAS_HEIGHT) * 400)) * 4))
 #endif
 
 #define DMA2D_CR_M2M (0 << 16)
@@ -115,7 +115,7 @@ static void LCD_ConfigDma(uint32_t src, uint16_t x, uint16_t y, uint16_t w, uint
     DMA2D->OPFCCR = DMA2D_OPFCCR_SET_CM(DMA2D_OUTPUT_ARGB8888) |
                     //DMA2D_OPFCCR_RBS |                    // Swap Red Blue
                     0;
-    uint32_t omar = x + (y * BASEWIDTH);
+    uint32_t omar = x + (y * CANVAS_WIDTH);
     DMA2D->OMAR = (uint32_t)(VIDEO_WINDOW + (omar * 4));
     DMA2D->OOR = BSP_LCD_GetXSize() - w;
     DMA2D->NLR = DMA2D_NLR_PLNL(w, h);
@@ -162,13 +162,13 @@ void LCD_BlendWindow(lcdarea_t *fg, uint32_t fg_offset, lcdarea_t *bg, uint32_t 
 
     }while(DMA2D->CR & DMA2D_CR_START);
 
-    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, BASEWIDTH, BASEHEIGHT);
+    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 void LCD_DrawBitmap (int x, int y, uint8_t *pbmp)
 {
     BSP_LCD_DrawBitmap(x, y, pbmp);
-    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, BASEWIDTH, BASEHEIGHT);
+    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 lcdarea_t *LCD_GetBmpData(uint8_t *pbmp, uint8_t argb){
@@ -255,11 +255,11 @@ void LCD_InitLL(void){
 
 #if VIDEO_LAYER_WINDOW
     BSP_LCD_Clear(LCD_COLOR_MAGENTA);
-    BSP_LCD_SetLayerWindow(VIDEO_LAYER, (BSP_LCD_GetXSize() - BASEWIDTH)/2, (BSP_LCD_GetYSize() - BASEHEIGHT)/2, BASEWIDTH, BASEHEIGHT);
+    BSP_LCD_SetLayerWindow(VIDEO_LAYER, (BSP_LCD_GetXSize() - CANVAS_WIDTH)/2, (BSP_LCD_GetYSize() - CANVAS_HEIGHT)/2, CANVAS_WIDTH, CANVAS_HEIGHT);
 #endif
     
     BSP_LCD_SelectLayer(VIDEO_LAYER);
-    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, BASEWIDTH, BASEHEIGHT);
+    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 /**
@@ -357,7 +357,7 @@ void VID_Init (unsigned char *palette)
     byte *cache;
     int chunk, cachesize;	
         
-    frame_buffer = (byte*)malloc(BASEWIDTH * BASEHEIGHT);
+    frame_buffer = (byte*)malloc(CANVAS_WIDTH * CANVAS_HEIGHT);
 
     if(!frame_buffer){
         Sys_Error("VID_Init: Fail to allocate memory\n");
@@ -365,8 +365,8 @@ void VID_Init (unsigned char *palette)
 
     LCD_InitLL();
     
-    vid.width = BASEWIDTH;
-    vid.height = BASEHEIGHT;
+    vid.width = CANVAS_WIDTH;
+    vid.height = CANVAS_HEIGHT;
 
     vid.maxwarpwidth = WARP_WIDTH;
     vid.maxwarpheight = WARP_HEIGHT;
@@ -380,7 +380,7 @@ void VID_Init (unsigned char *palette)
     vid.colormap = host_colormap;
     //vid.fullbright = 256 - LittleLong (*((int *)vid.colormap + 2048));
     vid.buffer = vid.conbuffer = frame_buffer;
-    vid.rowbytes = vid.conrowbytes = BASEWIDTH;
+    vid.rowbytes = vid.conrowbytes = CANVAS_WIDTH;
     
     VID_SetPalette(palette);
 
@@ -453,7 +453,7 @@ void VID_Shutdown (void)
 void VID_Update (vrect_t *rects)
 {
     //while(!(LTDC->CDSR & LTDC_CDSR_VSYNCS));  // Sync with VSYNC
-    //uint32_t offset = rects->x + (rects->y * BASEWIDTH);
+    //uint32_t offset = rects->x + (rects->y * CANVAS_WIDTH);
     //DMA2D->OMAR = (uint32_t)(VIDEO_WINDOW + (offset * 4));
     //DMA2D->NLR = DMA2D_NLR_PLNL(rects->width, rects->height);
 
@@ -482,7 +482,7 @@ void D_BeginDirectRect (int x, int y, byte *pbitmap, int width, int height)
 
     }while(DMA2D->CR & DMA2D_CR_START);
 
-    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, BASEWIDTH, BASEHEIGHT);
+    LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
 

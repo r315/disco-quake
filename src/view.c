@@ -283,7 +283,7 @@ void BuildGammaTable (float g)
 V_CheckGamma
 =================
 */
-qboolean V_CheckGamma (void)
+static qboolean V_CheckGamma (void)
 {
 	static float oldgammavalue;
 	
@@ -1034,7 +1034,7 @@ void V_RenderView (void)
 		R_PushDlights ();
 	}
 	
-	R_RenderView ();	
+	R_RenderView ();
 
 #ifndef GLQUAKE
 	if (v_crosshair.value)
