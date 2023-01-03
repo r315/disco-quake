@@ -176,7 +176,7 @@ DSTATUS SD_initialize(BYTE lun)
     uint8_t res = BSP_SD_Init();
 
     if(res == MSD_OK){
-        printf("\nSd card successfully initialized\n");
+        printf("\nSd card initialized\n");
         BSP_SD_GetCardInfo(&ci);
         printf("\tType: %x\n", (int)ci.CardType);
         printf("\tVersion: %x\n", (int)ci.CardVersion);
@@ -192,7 +192,7 @@ DSTATUS SD_initialize(BYTE lun)
     }else if(res == MSD_ERROR_SD_NOT_PRESENT){
         printf("SD card not present\n");
     }else{
-        printf("Fail to init card\n");
+        printf("SD card error\n");
     }
 #else
     Stat = SD_CheckStatus(lun);

@@ -4,6 +4,8 @@
 #include "stm32f7xx_hal.h"
 #include "disco_serial.h"
 #include "quakedef.h"
+#include "filesys.h"
+#include "fatfs.h"
 
 typedef struct {
     uint32_t r0;
@@ -23,16 +25,132 @@ static void disco_MpuConfig (void);
 
 int Sys_main(int argc, char **argv);
 
-int main(void){
-    const int argc = 3;
+static void sys_error(const char* err){
+    puts(err);
+    while(1){
 
-    disco_init();
+    }
+}
+
+static void init_fs(void)
+{
+    printf("\e[2J\r");
     
+    if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
+    {
+        sys_error("FATFS Link Driver fail");
+    }
+
+    FRESULT fr = f_mount(&SDFatFS, (TCHAR const *)SDPath, 1);
+
+    if (fr != FR_OK)
+    {
+        //sys_error("FATFS Fail to mount: %s",SDPath);
+    }
+
+    printf("FatFs type: %d\n", SDFatFS.fs_type);
+}
+
+static int count_args(const char *args){
+    int n = 0;
+    int len = 0;
+
+    while(*args){
+        len++;
+        if(*args == ' ' || *args == '\t'){
+            n++;
+            do{
+                args++;
+            }while(*args == ' ' || *args == '\t');            
+        }else{
+            args++;
+        }
+    }
+
+    if(len){
+        n++;
+    }
+    return n;
+}
+
+int main(void){
+    disco_init();
+    init_fs();
+
+    // Move SP to DRAM
+    // #define STACK_SIZE (1 * 1024*1024)
+    //uint32_t stack_top = (uint32_t) malloc(HEAP_SIZE);
+    //__set_MSP(stack_top + HEAP_SIZE);
+
+    //Sys_Printf("Stack: Top: 0x%08x base 0x%08x\n", sp + 1024 * 1024, sp);
+
+    #if 0
+    const int argc = 3;
     const char *argv[3] = {
         "quake",
         "-basedir",
         "quake"
     };
+
+    #else
+    FILE *fp;
+    int argc = 0;
+    char **argv = NULL;
+    char *s;
+
+    fp = fopen("quake.arg", "rb");
+
+    if(fp){
+        
+        int size = FileSys_GetSize(fp->_file);
+        char *param = (char*)calloc(size, 1);
+
+        if(param){
+           fread(param, size, 1, fp);
+        }
+        
+        fclose(fp);
+
+        size = (count_args((const char*)param) + 1);
+        argv = (char**)calloc(size, sizeof(char*));
+        
+        if(argv){
+            argv[argc++] = (char*)"quake";
+
+            s = param;
+            
+            if(*s){
+                argv[argc++] = s;
+            }
+
+            while(*s){
+                if(*s == ' '){
+                    *s++ = '\0';
+
+                    while(*s == ' ' || *s == '\t'){
+                        s++;
+                    }
+
+                    if(*s != '\0'){
+                        argv[argc++] = s;
+                    }
+                }else{
+                    s++;
+                }
+            }
+        }
+        
+    }
+    
+    
+    if(argv == NULL){
+        argv = (char*[]){
+            "quake"           
+        };
+        argc = 1;
+    }
+
+    #endif    
 
     Sys_main(argc, (char**)argv);
     

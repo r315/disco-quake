@@ -157,21 +157,7 @@ SYSTEM IO
 
 void Sys_Init( void )
 {
-    Sys_Printf("\e[2J\r");
     
-    if (FATFS_LinkDriver(&SD_Driver, SDPath) != 0)
-    {
-        Sys_Error("FATFS Link Driver fail\n");
-    }
-
-    FRESULT fr = f_mount(&SDFatFS, (TCHAR const *)SDPath, 1);
-
-    if (fr != FR_OK)
-    {
-        Sys_Error("FATFS Fail to mount: %s\n",SDPath);
-    }
-
-    Sys_Printf("FatFs type: %d\n", SDFatFS.fs_type);
 }
 
 
@@ -278,12 +264,6 @@ int Sys_main( int argc, char **argv )
     parms.basedir = ".";
     parms.argc = com_argc = argc;
     parms.argv = com_argv = argv;
-
-    // Move SP to DRAM
-    //uint32_t sp = (uint32_t) malloc(1 * 1024*1024);
-    //__set_MSP(sp + 1 * 1024*1024);
-
-    //Sys_Printf("Stack: Top: 0x%08x base 0x%08x\n", sp + 1024 * 1024, sp);
 
     if( !parms.membase )
     {

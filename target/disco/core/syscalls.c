@@ -38,7 +38,7 @@
 #include "fatfs.h"
 
 /* Variables */
-
+typedef FRESULT (*frw_t)(FIL *, void*, UINT, UINT*);
 //#undef errno
 extern int errno;
 extern int __io_putchar(int ch) __attribute__((weak));
@@ -275,38 +275,27 @@ int FileSys_Close(int fd){
     return -1;
 }
 
-int FileSys_Read(int fd, char *ptr, int len){
-    UINT br;
+static int filesys_read_write(int fd, char *ptr, int len, void *oper){
+    UINT brw;
     openedfile_t *of = getOpenedFile(fd);
 
     if(of == NULL){
         return -1;
     }
 
-    if(f_read(&of->file, ptr, len, &br) != FR_OK){
+    if(((frw_t)oper)(&of->file, ptr, len, &brw) != FR_OK){
         return -1;
     }
 
-    return br;	
+    return brw;
+}
+
+int FileSys_Read(int fd, char *ptr, int len){
+    return filesys_read_write(fd, ptr, len, f_read);
 }
 
 int FileSys_Write(int fd, char *ptr, int len){
-    #if 0
-    UINT bw;
-    openedfile_t *of = getOpenedFile(fd);
-
-    if(of == NULL){
-        return -1;
-    }
-
-    if (f_write(&of->file, ptr, len, &bw) != FR_OK){
-        return -1;
-    }
-
-    return bw;	
-    #else
-    return len;
-    #endif
+    return filesys_read_write(fd, ptr, len, f_write);
 }
 
 int FileSys_Lseek(int fd, int offset, int directive){
