@@ -1277,24 +1277,21 @@ void COM_Path_f (void)
 ============
 COM_WriteFile
 
-The filename will be prefixed by the current game directory
 ============
 */
 void COM_WriteFile (char *filename, void *data, int len)
 {
     int             handle;
-    char    name[MAX_OSPATH];
-    
-    sprintf (name, "%s/%s", com_gamedir, filename);
 
-    handle = Sys_FileOpenWrite (name);
+    handle = Sys_FileOpenWrite (filename);
+
     if (handle == -1)
     {
-        Sys_Printf ("COM_WriteFile: failed on %s\n", name);
+        Sys_Printf ("COM_WriteFile: failed on %s\n", filename);
         return;
     }
     
-    Sys_Printf ("COM_WriteFile: %s\n", name);
+    Sys_Printf ("COM_WriteFile: %s\n", filename);
     Sys_FileWrite (handle, data, len);
     Sys_FileClose (handle);
 }
@@ -1424,7 +1421,8 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
                     continue;
             }
             
-            sprintf (netpath, "%s/%s",search->filename, filename);
+            //sprintf (netpath, "%s/%s",search->filename, filename);
+            COM_FormPath(netpath, search->filename, filename, sizeof(netpath));
             
             findtime = Sys_FileTime (netpath);
             if (findtime == -1)
@@ -1442,9 +1440,10 @@ int COM_FindFile (char *filename, int *handle, FILE **file)
                     sprintf (cachepath,"%s%s", com_cachedir, netpath + 2);
 #elif defined(__linux__)
                 // don't use cache
-                sprintf (cachepath,"%s", netpath);
+                sprintf (cachepath, "%s", netpath);
 #else
-                sprintf (cachepath,"%s/%s", com_cachedir, netpath);
+                //sprintf (cachepath, "%s/%s", com_cachedir, netpath);
+                COM_FormPath (cachepath, com_cachedir, netpath, sizeof(cachepath));
 #endif
 
                 cachetime = Sys_FileTime (cachepath);
@@ -1832,3 +1831,22 @@ void COM_InitFilesystem (void)
 }
 
 
+int COM_FormPath(char *path, char *dir, char *filename, int max_len){
+    char *path_end = path + (max_len - 1);
+
+    while(path < path_end && *dir){
+        *path++ = *dir++;
+    }
+
+    if(path < path_end){
+        *path++ = '/';
+    }
+
+    while(path < path_end && *filename){
+        *path++ = *filename++;
+    }
+
+	*path = '\0';
+
+    return max_len - (path_end - path) - 1;
+}

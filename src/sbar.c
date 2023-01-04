@@ -64,10 +64,9 @@ int					sb_lines;		// scan lines to draw
 static cvar_t 		sb_alwayson = {"sb_alwayson", "0", true};
 static cvar_t 		sb_transparent = {"sb_transparent", "0", true};
 
-static char		scoreboardtext[MAX_SCOREBOARD][20];
-static int		scoreboardtop[MAX_SCOREBOARD];
-static int		scoreboardbottom[MAX_SCOREBOARD];
-static int		scoreboardcount[MAX_SCOREBOARD];
+//static char		scoreboardtext[MAX_SCOREBOARD][20];
+//static int		scoreboardtop[MAX_SCOREBOARD];
+//static int		scoreboardbottom[MAX_SCOREBOARD];
 static int		scoreboardlines;
 
 
@@ -431,6 +430,7 @@ int	Sbar_ColorForMap (int m)
 	return m < 128 ? m + 8 : m + 8;
 }
 
+#if 0
 /*
 ===============
 Sbar_UpdateScoreboard
@@ -459,7 +459,7 @@ void Sbar_UpdateScoreboard (void)
 		scoreboardbottom[i] = Sbar_ColorForMap (bottom);
 	}
 }
-
+#endif
 
 
 /*
@@ -1111,7 +1111,7 @@ void Sbar_DeathmatchOverlay (void)
 	SCR_SetFullUpdate ();
 
 	pic = Draw_CachePic ("gfx/ranking.lmp");
-	M_DrawPic ((320-pic->width)/2, 8, pic);
+	Draw_Pic ((vid.width - pic->width) / 2, 8, pic);
 
 // scores
 	Sbar_SortFrags ();
@@ -1297,7 +1297,7 @@ void Sbar_IntermissionOverlay (void)
 	y = 24;
 
 	pic = Draw_CachePic ("gfx/complete.lmp");
-	Draw_Pic (x - 96, y, pic);
+	Draw_Pic (x - (pic->width / 2), y, pic);
 
 	pic = Draw_CachePic ("gfx/inter.lmp");
 	Draw_TransPic (x - 160, y + 32, pic);
@@ -1317,7 +1317,6 @@ void Sbar_IntermissionOverlay (void)
 	Sbar_IntermissionNumber (x, y + 120, cl.stats[STAT_MONSTERS], 3, 0);
 	Draw_TransPic (x + 72, y + 120,sb_slash);
 	Sbar_IntermissionNumber (x + 80, y + 120, cl.stats[STAT_TOTALMONSTERS], 3, 0);
-
 }
 
 

@@ -180,7 +180,7 @@ void SCR_DrawCenterString (void)
 	} while (1);
 }
 
-void SCR_CheckDrawCenterString (void)
+static void SCR_CheckDrawCenterString (void)
 {
 	if (scr_center_lines > scr_erase_lines)
 		scr_erase_lines = scr_center_lines;
@@ -597,15 +597,15 @@ void SCR_DrawConsole (void)
 
 /* 
 ============== 
-WritePCXfile 
+SCR_WritePCXfile
 ============== 
 */ 
-static void WritePCXfile (char *filename, byte *data, int width, int height,
+static void SCR_WritePCXfile (char *filename, byte *data, int width, int height,
 	int rowbytes, byte *palette) 
 {
 	int		i, j, length;
 	pcx_t	*pcx;
-	byte		*pack;
+	byte	*pack;
 	  
 	pcx = Hunk_TempAlloc (width*height*2+1000);
 	if (pcx == NULL)
@@ -650,8 +650,9 @@ static void WritePCXfile (char *filename, byte *data, int width, int height,
 	}
 			
 // write the palette
-	*pack++ = 0x0c;	// palette ID byte
-	for (i=0 ; i<768 ; i++)
+	// palette ID byte
+	*pack++ = 0x0c;
+	for (i=0; i < 768; i++)
 		*pack++ = *palette++;
 		
 // write output file 
@@ -668,39 +669,27 @@ SCR_ScreenShot_f
 */  
 void SCR_ScreenShot_f (void) 
 { 
-	int     i; 
-	char		pcxname[80]; 
-	char		checkname[MAX_OSPATH];
+	int     i = 0;
+	char	pcxname[MAX_OSPATH];
 
-// 
-// find a file name to save it to 
-// 
-	strcpy(pcxname,"quake00.pcx");
-		
-	for (i=0 ; i<=99 ; i++) 
-	{ 
-		pcxname[5] = i/10 + '0'; 
-		pcxname[6] = i%10 + '0'; 
-		sprintf (checkname, "%s/%s", com_gamedir, pcxname);
-		if (Sys_FileTime(checkname) == -1)
-			break;	// file doesn't exist
-	} 
-	if (i==100) 
-	{
-		Con_Printf ("SCR_ScreenShot_f: Couldn't create a PCX file\n"); 
-		return;
- 	}
+	int len = COM_FormPath(pcxname, com_gamedir, "screenshot_", sizeof(pcxname));
 
-// 
-// save the pcx file 
-// 
+	// 
+	// find a file name to save it to 
+	//
+	for(i = 0; i < 100; i++){ 
+		sprintf (pcxname + len, "%d.pcx", i);
+		if(Sys_FileTime(pcxname) == -1){
+			// 
+			// save the pcx file 
+			// 
+			SCR_WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+			Con_Printf ("Wrote %s\n", pcxname);
+			return;
+		}
+	}
 
-
-	WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes,
-				  host_basepal);
-
-
-	Con_Printf ("Wrote %s\n", pcxname);
+	Con_Printf ("Fail to save screenshot to %s\n", com_gamedir);
 } 
 
 
@@ -838,6 +827,13 @@ void SCR_BringDownConsole (void)
 	VID_SetPalette (host_basepal);
 }
 
+/*
+===============
+SCR_DrawFrameCount
+
+Display number of frames rendered
+===============
+*/
 void SCR_DrawFrameCount(void) {
 	int cx;
 	int cy = 10;
@@ -853,7 +849,13 @@ void SCR_DrawFrameCount(void) {
 	}
 }
 
+/*
+===============
+SCR_DrawFps
 
+Display number of frames rendered per second
+===============
+*/
 void SCR_DrawFps(void) {
 	static float last_time = 0;
 	static int fps = 0, fps_count = 0;
@@ -882,6 +884,7 @@ void SCR_DrawFps(void) {
 		}
 	}
 }
+
 /*
 ==================
 SCR_UpdateScreen
@@ -947,7 +950,7 @@ void SCR_UpdateScreen (void)
 	V_RenderView ();
 
 	//
-	// Full copy is something has changed on status bar
+	// Full copy if something has changed on status bar
 	//
 
 	if (Sbar_HasChanged()) {

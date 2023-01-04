@@ -176,7 +176,7 @@ byte *COM_LoadStackFile (char *path, void *buffer, int bufsize);
 byte *COM_LoadTempFile (char *path);
 byte *COM_LoadHunkFile (char *path);
 void COM_LoadCacheFile (char *path, struct cache_user_s *cu);
-
+int COM_FormPath(char *path, char *dir, char *filename, int max_len);
 
 extern	struct cvar_s	registered;
 
