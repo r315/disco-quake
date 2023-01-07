@@ -61,7 +61,7 @@ static cvar_t	cl_crossy 		= {"cl_crossy", "0", false};
 static cvar_t	v_centermove 	= {"v_centermove", "0.15", false};
 static cvar_t	v_centerspeed 	= {"v_centerspeed","500"};
 static cvar_t	v_gamma 		= {"v_gamma", "1", true};
-static cvar_t 	v_dlights		= {"v_dlights", "1" }; // Dynamic lights
+static cvar_t 	v_dlights		= {"v_dlights", "1", true}; // Dynamic lights
 
 static cshift_t	cshift_empty	= { {130,80,50}, 0 };
 static cshift_t	cshift_water	= { {130,80,50}, 128 };

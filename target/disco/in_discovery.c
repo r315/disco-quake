@@ -84,7 +84,7 @@ static void dpad_draw(dpad_t *dpad, float x, float y){
     x = (dpad->fg->w / 2) - (((dpad->bg->w) / 2) + x);
     y = (dpad->fg->h / 2) - (((dpad->bg->h) / 2) - y);
 
-    LCD_BlendWindow(dpad->fg, x + (y * dpad->fg->w), dpad->bg, 0, dpad->px - (dpad->w/2), dpad->py - (dpad->h/2), dpad->w, dpad->h);        
+    LCD_BlendWindow(dpad->fg, x + (y * dpad->fg->w), dpad->bg, 0, dpad->px - (dpad->w/2), dpad->py - (dpad->h/2), dpad->w, dpad->h);
 }
 
 static uint8_t dpad_vector(dpad_t *dpad, uint16_t ts_x, uint16_t ts_y){
@@ -201,6 +201,8 @@ void IN_Commands (void)
  * 
  */
 void IN_Init (void){
+    char path[64];
+
     if(BSP_TS_Init(LCD_LANDSCAPE_WIDTH, LCD_LANDSCAPE_HEIGHT) != TS_OK){
         Sys_Error("Touch not present");
     }else{
@@ -240,35 +242,66 @@ void IN_Init (void){
         b_button.dir = DPAD_NONE;
         b_button.radius = 40;
 
-        a_button.fg = LCD_LoadBmp("a_btn_bg.bmp", 0);
+        COM_FormPath(path, host_parms.basedir, "fn.bmp", sizeof(path));
+        lcdarea_t *tmp = LCD_LoadBmp(path, 0);
+
+        if(tmp){
+            LCD_BlendWindow(tmp, 0, NULL, 0, 0, 0, tmp->w, tmp->h);
+            free(tmp->data);
+            free(tmp);
+        }else{
+            Sys_Printf("%s: Unable to load function keys bitmap\n");
+        }
+
+        COM_FormPath(path, host_parms.basedir, "numpad.bmp", sizeof(path));
+        tmp = LCD_LoadBmp(path, 0);
+
+        if(tmp){
+            LCD_BlendWindow(tmp, 0, NULL, 0, 32, 68, tmp->w, tmp->h);
+            free(tmp->data);
+            free(tmp);
+        }else{
+            Sys_Printf("%s: Unable to load numeric keys bitmap\n");
+        }
+
+        COM_FormPath(path, host_parms.basedir, "a_btn_bg.bmp", sizeof(path));
+        a_button.fg = LCD_LoadBmp(path, 0);
         a_button.bg = NULL;        
         if(a_button.fg){
             dpad_draw(&a_button, 0, 0);
             free(a_button.fg->data);
+        }else{
+            Sys_Printf("%s: Unable to load A button bitmap\n");
         }
 
-        b_button.fg = LCD_LoadBmp("b_btn_bg.bmp", 0);
+        COM_FormPath(path, host_parms.basedir, "b_btn_bg.bmp", sizeof(path));
+        b_button.fg = LCD_LoadBmp(path, 0);
         b_button.bg = NULL;
         if(b_button.fg){
             dpad_draw(&b_button, 0, 0);
             free(b_button.fg->data);
+        }else{
+            Sys_Printf("%s: Unable to load B button bitmap\n");
         }
 
-        l_dpad.fg = LCD_LoadBmp("dpad_bg.bmp", 0);
+        COM_FormPath(path, host_parms.basedir, "dpad_bg.bmp", sizeof(path));
+        l_dpad.fg = LCD_LoadBmp(path, 0);
         l_dpad.bg = NULL;
         if(a_button.fg){
             dpad_draw(&l_dpad, 0, 0);
             free(l_dpad.fg->data);
         }
 
-        r_dpad.bg = LCD_LoadBmp("stick_bg.bmp", 0);
-        r_dpad.fg = LCD_LoadBmp("stick_fg.bmp", 1);       
+        COM_FormPath(path, host_parms.basedir, "stick_bg.bmp", sizeof(path));
+        r_dpad.bg = LCD_LoadBmp(path, 0);
+        COM_FormPath(path, host_parms.basedir, "stick_fg.bmp", sizeof(path));
+        r_dpad.fg = LCD_LoadBmp(path, 1);       
         
         if(r_dpad.fg == NULL || r_dpad.bg == NULL){
             Sys_Error("Unable to load dpad bitmaps\n");
-        }
-        
-        dpad_draw(&r_dpad, 0, 0);               
+        }else{
+            dpad_draw(&r_dpad, 0, 0);
+        }        
 
         dpad_keys[0] = K_UPARROW;
         dpad_keys[1] = K_DOWNARROW;

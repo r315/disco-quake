@@ -106,14 +106,13 @@ LoopFillZerobss:
  * @param  None     
  * @retval None       
 */
-    .section  .text.Default_Handler, "ax", %progbits
+    .section  .text.Interrupt_Handlers, "ax", %progbits
 Default_Handler:
-Infinite_Loop:
+  b Fault_Handler
   bkpt #01
+Infinite_Loop:
   b  Infinite_Loop
-.size  Default_Handler, .-Default_Handler
 
-    .section  .text.HardFault_Handler, "ax", %progbits
 HardFault_Handler:
   tst lr, #4
   ite eq
@@ -122,13 +121,8 @@ HardFault_Handler:
   b Stack_Dump
   bkpt #01
   b .
-.size  HardFault_Handler, .-HardFault_Handler
 
-    .section  .text.UsageFault_Handler, "ax", %progbits
-UsageFault_Handler:
-  bkpt #01
-  b  UsageFault_Handler
-  .size  UsageFault_Handler, .-UsageFault_Handler
+.size  Default_Handler, .-HardFault_Handler
 
 /******************************************************************************
 *
@@ -293,7 +287,7 @@ g_pfnVectors:
    .thumb_set BusFault_Handler,Default_Handler
 
    .weak      UsageFault_Handler
-   .thumb_set UsageFault_Handler,UsageFault_Handler
+   .thumb_set UsageFault_Handler,Default_Handler
 
    .weak      SVC_Handler
    .thumb_set SVC_Handler,Default_Handler
@@ -308,7 +302,7 @@ g_pfnVectors:
    .thumb_set SysTick_Handler,Default_Handler              
   
    .weak      WWDG_IRQHandler                   
-   .thumb_set WWDG_IRQHandler,Default_Handler      
+   .thumb_set WWDG_IRQHandler,Default_Handler
                   
    .weak      PVD_IRQHandler      
    .thumb_set PVD_IRQHandler,Default_Handler
@@ -638,6 +632,7 @@ g_pfnVectors:
    .thumb_set MDIOS_IRQHandler,Default_Handler
 
    .weak      Stack_Dump
+   .weak      Fault_Handler
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/        
  

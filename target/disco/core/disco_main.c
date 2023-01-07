@@ -23,6 +23,8 @@ static void disco_ClockConfig (void);
 static void disco_init (void);
 static void disco_MpuConfig (void);
 
+//static void sdcard_benchmark(void);
+
 int Sys_main(int argc, char **argv);
 
 static void sys_error(const char* err){
@@ -265,7 +267,52 @@ void HAL_MspInit(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 }
 
+#if 0
+/**
+ * @brief Some sd card tests
+ * 
+ */
+#define TEST_SECTOR         (64 * 1024)
+#define TEST_BUFFER_SIZE    (8 * 1024)  // Limited by cache size
 
+DRESULT SD_read(BYTE lun, BYTE *dest, DWORD sector, UINT count);
+DRESULT SD_write(BYTE lun, const BYTE *src, DWORD sector, UINT count);
+
+static uint32_t test_read(uint8_t *buffer, uint32_t count){
+    uint32_t timeout = HAL_GetTick();
+    SD_read(0, (BYTE*)buffer, (DWORD)TEST_SECTOR, (UINT)count);
+    return HAL_GetTick() - timeout;
+}
+
+static uint32_t test_write(uint8_t *buffer, uint32_t count){
+    uint32_t timeout = HAL_GetTick();
+    SD_write(0, (BYTE*)buffer, (DWORD)TEST_SECTOR, (UINT)count);
+    return HAL_GetTick() - timeout;
+}
+
+static void sdcard_benchmark(void){
+    uint8_t *buff;
+    uint32_t num_sectors;
+
+    buff = (uint8_t*) malloc(TEST_BUFFER_SIZE + 4); // generally gives aligned addresses
+    num_sectors = TEST_BUFFER_SIZE / BLOCKSIZE;
+    
+    if(!buff){
+        return;
+    }
+
+    printf("Read aligned: %fms\n", (float)test_read(buff, num_sectors) / num_sectors);
+    printf("Write aligned: %fms\n", (float)test_write(buff, num_sectors) / num_sectors);
+    printf("Read unaligned: %fms\n", (float)test_read(buff + 1, num_sectors)/ num_sectors);
+    printf("Write unaligned: %fms\n", (float)test_write(buff + 1, num_sectors)/ num_sectors);
+    
+    free(buff);
+}
+#endif
+/**
+ * @brief Interrupt handlers
+ * 
+ */
 void SysTick_Handler(void)
 {
   HAL_IncTick();
@@ -309,6 +356,20 @@ void UsageFault_Handler(void){
         "bkpt #01 \n"
         "b . \n"
     );   
+}
+
+typedef void(*vector_t)(void);
+
+void Fault_Handler(void)
+{
+    volatile uint8_t isr_number = (SCB->ICSR & 255) - 16;
+    // See position number on Table 46 from RM0410
+    UNUSED(isr_number);
+
+    __asm volatile(
+        "bkpt #01 \n"
+        "b . \n"
+    );
 }
 
 void Stack_Dump(stackframe_t *stack){

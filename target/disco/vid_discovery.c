@@ -53,7 +53,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 viddef_t		vid;				// global video state
 unsigned short	d_8to16table[256];
-unsigned		d_8to24table[256];
 
 /**
  * Local variables
@@ -162,15 +161,30 @@ void LCD_BlendWindow(lcdarea_t *fg, uint32_t fg_offset, lcdarea_t *bg, uint32_t 
 
     }while(DMA2D->CR & DMA2D_CR_START);
 
+    // Restore dma settings to game canvas
     LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
+/**
+ * @brief Draws a bitmap from memory into lcd using BSP library
+ * 
+ * @param x  : x position
+ * @param y  : y position
+ * @param pbmp  : Bitmap header and data
+ */
 void LCD_DrawBitmap (int x, int y, uint8_t *pbmp)
 {
     BSP_LCD_DrawBitmap(x, y, pbmp);
     LCD_ConfigDma ((uint32_t)frame_buffer, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
 }
 
+/**
+ * @brief Converts bitmap data on memory to more useful lcdarea structure
+ * 
+ * @param pbmp : raw bitmap data
+ * @param argb : 1 argb format output, 0 defined by bitmap bpp
+ * @return lcdarea_t* 
+ */
 lcdarea_t *LCD_GetBmpData(uint8_t *pbmp, uint8_t argb){
     uint32_t index = 0, width = 0, height = 0, bit_pixel = 0;    
 

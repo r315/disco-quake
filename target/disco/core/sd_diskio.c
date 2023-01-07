@@ -41,21 +41,13 @@
  */
 #define SD_TIMEOUT (30 * 1000)
 #define SD_DEFAULT_BLOCK_SIZE 512
-#define ENABLE_SD_DMA_CACHE_MAINTENANCE 0
+#define ENABLE_SD_DMA_CACHE_MAINTENANCE 1   // Required for DMA
 
-#define DISCO_SD_USE_DMA    0
+#define DISCO_SD_READ_USE_DMA     1
+#define DISCO_SD_WRITE_USE_DMA    1
 
 /* Private variables ---------------------------------------------------------*/
-/*
-* Some DMA requires 4-Byte aligned address buffer to correctly read/wite data,
-* in FatFs some accesses aren't thus we need a 4-byte aligned scratch buffer to correctly
-* transfer data
-*/
-#if ENABLE_SD_DMA_CACHE_MAINTENANCE
-ALIGN_32BYTES(static uint8_t scratch[BLOCKSIZE]); // 32-Byte aligned for cache maintenance
-#else
-__ALIGN_BEGIN static uint8_t scratch[BLOCKSIZE] __ALIGN_END;
-#endif
+static uint32_t scratch[BLOCKSIZE / 4];
 
 /* Disk status */
 static volatile DSTATUS Stat = STA_NOINIT;
@@ -211,6 +203,57 @@ DSTATUS SD_status(BYTE lun)
 }
 
 /**
+ * @brief 
+ * 
+ * @param data 
+ * @param sector 
+ * @param count 
+ * @return DRESULT 
+ */
+static DRESULT read_sector(uint32_t *data, uint32_t sector, uint32_t count){
+    uint32_t timeout;
+
+#if DISCO_SD_READ_USE_DMA
+    ReadStatus = 0;
+    
+    if(BSP_SD_ReadBlocks_DMA(data, sector, count) == MSD_OK){
+        /* Wait that read process is completed or a timeout occurs */
+        timeout = HAL_GetTick();
+
+        while(ReadStatus == 0){
+            if ((HAL_GetTick() - timeout) >= SD_TIMEOUT) {
+                /* Timeout occurred */
+                return RES_ERROR; 
+            }        
+        }
+
+        /* End of transfer interrupt occurred, check card status */
+        timeout = HAL_GetTick();
+        do {
+            if (BSP_SD_GetCardState() == SD_TRANSFER_OK) {
+                /* All good */
+                return RES_OK;                
+            }
+        }while ((HAL_GetTick() - timeout) < SD_TIMEOUT);
+    }
+#else
+    /* Blocking  */
+    if(BSP_SD_ReadBlocks(data, sector, count, SD_TIMEOUT) == MSD_OK){
+        /* Wait that writing process is completed or a timeout occurs */
+        timeout = HAL_GetTick();
+        do {
+            if (BSP_SD_GetCardState() == SD_TRANSFER_OK) {
+                /* All good */
+                return RES_OK;                
+            }
+        }while ((HAL_GetTick() - timeout) < SD_TIMEOUT);
+    }
+#endif
+    sd_error();
+    return RES_ERROR;
+}
+
+/**
   * @brief  Reads Sector(s)
   * @param  lun : not used
   * @param  *buff: Data buffer to store read data
@@ -218,57 +261,83 @@ DSTATUS SD_status(BYTE lun)
   * @param  count: Number of sectors to read (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
+DRESULT SD_read(BYTE lun, BYTE *dest, DWORD sector, UINT count)
 {
-    DRESULT res = RES_ERROR;
-#if !DISCO_SD_USE_DMA    
-    /* Blocking  */
-    for (uint32_t i = 0; i < count; i++){
-        do{
-            res = BSP_SD_ReadBlocks((uint32_t *)scratch, (uint32_t)(sector + i), 1, SD_TIMEOUT);
-            if (res != MSD_OK){
-                sd_error();
-            }
-            while (BSP_SD_GetCardState() != MSD_OK);
-        }while(res != MSD_OK); // On error, try again
-        // Copy sector to buffer
-        for(uint32_t i = 0; i < BLOCKSIZE; i++, buff++){
-            *buff = scratch[i];
-        }
-    }
-#else
+#if DISCO_SD_READ_USE_DMA
     if (SD_CheckStatusWithTimeout(SD_TIMEOUT) < 0) {
-        return res;
+        return RES_ERROR;
     }
-
-    for (int i = 0; i < count; i++) {
-        res = BSP_SD_ReadBlocks_DMA((uint32_t*)scratch, (uint32_t)sector++, 1);
-        if (res == MSD_OK) {
-            /* wait until the read is successful or a timeout occurs */
-            int timeout = HAL_GetTick();
-            while((ReadStatus == 0) && ((HAL_GetTick() - timeout) < SD_TIMEOUT)) { }
-            if (ReadStatus == 0)
-            {
-                res = RES_ERROR;
-                break;
-            }
-            ReadStatus = 0;
-
-#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
-          /*
-          *
-          * invalidate the scratch buffer before the next read to get the actual data instead of the cached one
-          */
-          SCB_InvalidateDCache_by_Addr((uint32_t*)scratch, BLOCKSIZE);
 #endif
-            memcpy(buff, scratch, BLOCKSIZE);
-            buff += BLOCKSIZE;
-        } else {
-          break;
+    /* Check if destination is 32 bit aligned */
+    if (!((uint32_t)dest & 0x3)) {
+        return read_sector((uint32_t*)dest, sector, count);
+    }else{
+        while(count--){
+            if(read_sector((uint32_t*)scratch, sector++, 1) != RES_OK){
+                return RES_ERROR;
+            }
+#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1) && (DISCO_SD_READ_USE_DMA == 1)
+            /* Invalidate the scratch buffer before the next
+                read to get the actual data instead of the cached one */
+            SCB_InvalidateDCache_by_Addr((uint32_t*)scratch, BLOCKSIZE);
+#endif
+            /* Copy sector data to buffer */
+            for(uint32_t i = 0; i < BLOCKSIZE; i++, dest++){
+                *dest = ((BYTE*)scratch)[i];
+            }
         }
     }
-#endif
-    return res;
+    return RES_OK;
+}
+
+/**
+ * @brief Reads a sector using DMA. On SD max speed CPU cannot fill 
+ * SDMMC controller fifo fast enough
+ * 
+ * @param data      : Data to be written, must be 32bit aligned 
+ * @param sector    : sector number
+ * @param count     : number of sectors to be written
+ * 
+ * @return DRESULT 
+ */
+static DRESULT write_sector(uint32_t *data, uint32_t sector, uint32_t count){    
+    uint32_t timeout;
+#if DISCO_SD_WRITE_USE_DMA
+    WriteStatus = 0;
+    
+    if(BSP_SD_WriteBlocks_DMA(data, sector, count) == MSD_OK){
+        /* Wait that writing process is completed or a timeout occurs */
+        timeout = HAL_GetTick();
+
+        while (WriteStatus == 0) {
+            if((HAL_GetTick() - timeout) >= SD_TIMEOUT){
+                /* Timeout occurred */
+                return RES_ERROR;
+            }
+        }
+
+        /* End of transfer interrupt occurred, check card status */
+        timeout = HAL_GetTick();
+        do{
+            if (BSP_SD_GetCardState() == SD_TRANSFER_OK) {
+                /* All good */
+                return RES_OK;                
+            }
+        }while ((HAL_GetTick() - timeout) < SD_TIMEOUT);
+    }
+#else /* DISCO_SD_USE_DMA */
+    int retry = 3;
+    /* Blocking  */    
+    do{
+        res = BSP_SD_WriteBlocks((uint32_t *)src, (uint32_t)sector, count, SD_TIMEOUT);
+        if (res != MSD_OK){
+            sd_error();
+        }
+        while (BSP_SD_GetCardState() != MSD_OK);
+    }while(res != MSD_OK && --retry); // On error, try again
+#endif    
+    sd_error();
+    return RES_ERROR;
 }
 
 /* USER CODE BEGIN beforeWriteSection */
@@ -276,110 +345,49 @@ DRESULT SD_read(BYTE lun, BYTE *buff, DWORD sector, UINT count)
 /* USER CODE END beforeWriteSection */
 /**
   * @brief  Writes Sector(s)
+  * 
   * @param  lun : not used
-  * @param  *buff: Data to be written
+  * @param  buff: Data to be written
   * @param  sector: Sector address (LBA)
   * @param  count: Number of sectors to write (1..128)
   * @retval DRESULT: Operation result
   */
-DRESULT SD_write(BYTE lun, const BYTE *buff, DWORD sector, UINT count)
+DRESULT SD_write(BYTE lun, const BYTE *src, DWORD sector, UINT count)
 {
-    DRESULT res = RES_ERROR;
-    uint32_t timeout;
-    uint8_t ret = 0;
-    int i;
-
-    WriteStatus = 0;
-#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
-    uint32_t alignedAddr;
-#endif
-
-    if (SD_CheckStatusWithTimeout(SD_TIMEOUT) < 0)
-    {
-        return res;
+#if DISCO_SD_WRITE_USE_DMA
+    if (SD_CheckStatusWithTimeout(SD_TIMEOUT) < 0) {
+        return RES_ERROR;
     }
-    
-    if (!((uint32_t)buff & 0x3))
-    {
-#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
-
-        /*
-    the SCB_CleanDCache_by_Addr() requires a 32-Byte aligned address
-    adjust the address and the D-Cache size to clean accordingly.
-    */
-        alignedAddr = (uint32_t)buff & ~0x1F;
-        SCB_CleanDCache_by_Addr((uint32_t *)alignedAddr, count * BLOCKSIZE + ((uint32_t)buff - alignedAddr));
-#endif
-
-        if (BSP_SD_WriteBlocks_DMA((uint32_t *)buff,
-                                   (uint32_t)(sector),
-                                   count) == MSD_OK)
-        {
-            /* Wait that writing process is completed or a timeout occurs */
-
-            timeout = HAL_GetTick();
-            while ((WriteStatus == 0) && ((HAL_GetTick() - timeout) < SD_TIMEOUT))
-            {
+#endif    
+    /* Check if source is 32 bit aligned */
+    if (!((uint32_t)src & 0x3)) {
+#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1) && (DISCO_SD_WRITE_USE_DMA == 1)
+        /* the SCB_CleanDCache_by_Addr() requires a 32-Byte aligned address
+        adjust the address and the D-Cache size to clean accordingly. */
+        uint32_t alignedAddr;
+        alignedAddr = (uint32_t)src & ~0x1F;
+        SCB_CleanDCache_by_Addr((uint32_t *)alignedAddr, count * BLOCKSIZE + ((uint32_t)src - alignedAddr));
+#endif /* ENABLE_SD_DMA_CACHE_MAINTENANCE */
+        return write_sector((uint32_t*)src, sector, count);
+    }else{
+        /* Slow path, fetch each sector a part and memcpy to destination buffer */
+#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1) && (DISCO_SD_WRITE_USE_DMA == 1)
+        /* invalidate the scratch buffer before the next write to get the 
+           actual data instead of the cached one */
+         SCB_InvalidateDCache_by_Addr((uint32_t *)scratch, BLOCKSIZE);
+#endif /* ENABLE_SD_DMA_CACHE_MAINTENANCE */
+        while(count--) {
+             /* Copy sector data from buffer */
+            for(uint32_t i = 0; i < BLOCKSIZE; i++, src++){
+                ((BYTE*)scratch)[i] = *src;
             }
-            /* incase of a timeout return error */
-            if (WriteStatus == 0)
-            {
-                res = RES_ERROR;
+            if (write_sector((uint32_t *)scratch, (uint32_t)sector++, 1) != RES_OK) {
+                return RES_ERROR;
             }
-            else
-            {
-                WriteStatus = 0;
-                timeout = HAL_GetTick();
-
-                while ((HAL_GetTick() - timeout) < SD_TIMEOUT)
-                {
-                    if (BSP_SD_GetCardState() == SD_TRANSFER_OK)
-                    {
-                        res = RES_OK;
-                        break;
-                    }
-                }
-            }
-        }
-        else
-        {
-            /* Slow path, fetch each sector a part and memcpy to destination buffer */
-#if (ENABLE_SD_DMA_CACHE_MAINTENANCE == 1)
-            /*
-      * invalidate the scratch buffer before the next write to get the actual data instead of the cached one
-      */
-            SCB_InvalidateDCache_by_Addr((uint32_t *)scratch, BLOCKSIZE);
-#endif
-
-            for (i = 0; i < count; i++)
-            {
-                WriteStatus = 0;
-                ret = BSP_SD_WriteBlocks_DMA((uint32_t *)scratch, (uint32_t)sector++, 1);
-                if (ret == MSD_OK)
-                {
-                    /* wait for a message from the queue or a timeout */
-                    timeout = HAL_GetTick();
-                    while ((WriteStatus == 0) && ((HAL_GetTick() - timeout) < SD_TIMEOUT))
-                    {
-                    }
-                    if (WriteStatus == 0)
-                    {
-                        break;
-                    }
-
-                    memcpy((void *)buff, (void *)scratch, BLOCKSIZE);
-                    buff += BLOCKSIZE;
-                }
-                else
-                {
-                    break;
-                }
-            }
-            if ((i == count) && (ret == MSD_OK))
-                res = RES_OK;
-        }
+        }               
     }
-    return res;
+
+    return RES_OK;
 }
 
 /* USER CODE BEGIN beforeIoctlSection */
@@ -435,12 +443,20 @@ DRESULT SD_ioctl(BYTE lun, BYTE cmd, void *buff)
     return res;
 }
 
-#if DISCO_SD_USE_DMA
+#if DISCO_SD_READ_USE_DMA
 void DMA2_Stream0_IRQHandler(void){
     HAL_DMA_IRQHandler(uSdHandle.hdmarx);
 }
+#endif
 
+#if DISCO_SD_WRITE_USE_DMA
 void DMA2_Stream5_IRQHandler(void){
     HAL_DMA_IRQHandler(uSdHandle.hdmatx);
+}
+
+void SDMMC2_IRQHandler(){
+    HAL_SD_IRQHandler(&uSdHandle);
+    WriteStatus = 1;
+    ReadStatus = 1;
 }
 #endif

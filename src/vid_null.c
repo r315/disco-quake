@@ -36,7 +36,6 @@ modestate_t modestate;
 cvar_t _windowed_mouse;
 
 unsigned short d_8to16table[256];
-unsigned d_8to24table[256];
 
 void VID_SetPalette (unsigned char *palette){}
 
