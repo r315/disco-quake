@@ -27,7 +27,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define	CANVAS_HEIGHT	200 //320
 
 #define VIDEO_LAYER_WINDOW	0
-#define VID_DRAW_PALETTE	1
+#define VID_DRAW_PALETTE	0
 
 #define VIDEO_LAYER			DMA2D_FOREGROUND_LAYER
 #define VIDEO_LAYER_BASE    LCD_FG_BASE_ADDR
@@ -47,6 +47,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define DMA2D_FGPFCCR_SET_CM(cm) ((cm) << 0)  // Input Color mode
 #define DMA2D_OPFCCR_SET_CM(cm) ((cm) << 0)	// Output Color mode
 #define DMA2D_NLR_PLNL(pl, nl) (((pl) << 16) | nl)
+
+#define LCD_BACKGROUND_COLOR    0xFF484848
 
 /**
  * Global variables
@@ -260,12 +262,16 @@ void LCD_InitLL(void){
     
     LCD_InitClock ();
 
-    memset((uint8_t*)LCD_FB_BASE_ADDR, 0, LCD_FB_SIZE);
     
     BSP_LCD_Init ();
     
     BSP_LCD_LayerDefaultInit(VIDEO_LAYER, VIDEO_LAYER_BASE);
     BSP_LCD_SetColorKeying(VIDEO_LAYER, LCD_COLOR_MAGENTA);
+
+    // Clear frame buffer L1 + L2
+    memset((uint8_t*)LCD_FB_BASE_ADDR, 0, LCD_FB_SIZE);
+    // Force Background color, visible on transparent color
+    LTDC->BCCR = LCD_BACKGROUND_COLOR;
 
 #if VIDEO_LAYER_WINDOW
     BSP_LCD_Clear(LCD_COLOR_MAGENTA);
@@ -277,7 +283,7 @@ void LCD_InitLL(void){
 }
 
 /**
- * @brief Loads a bitmap file from file system
+ * @brief Loads a bitmap file to memory
  * 
  * @param filename  path to file
  * @param argb      Convert image to ARGB8888 format
@@ -352,7 +358,7 @@ lcdarea_t *LCD_LoadBmp(const char *filename, uint8_t argb)
         if(argb){
             for(int i = 0; i < width; i++){
                 uint32_t color = LCD_COLOR_TRANSPARENT;
-                fread(&color, 1, (bit_pixel/8), fp); // Read one RGB pixel                
+                fread(&color, 1, (bit_pixel/8), fp); // Read one RGB888 pixel                
                 ((uint32_t*)pdst)[i] = (color == LCD_COLOR_MAGENTA)? 0 : color;                
             }
         }else{        
@@ -443,7 +449,7 @@ void VID_SetPalette (unsigned char *palette)
     }while(DMA2D->FGPFCCR & DMA2D_FGPFCCR_START);
 #endif
 
-#ifdef VID_DRAW_PALETTE
+#if (VID_DRAW_PALETTE == 1)
     // Draw 3x3 px squares on bottom of display
     for(int l = 0; l < 3; l++){
         uint32_t *pdst = (uint32_t*)(VIDEO_LAYER_BASE + ((479 - l) * 800 * 4));
