@@ -610,7 +610,7 @@ static void SCR_WritePCXfile (char *filename, byte *data, int width, int height,
 	pcx = Hunk_TempAlloc (width*height*2+1000);
 	if (pcx == NULL)
 	{
-		Con_Printf("SCR_ScreenShot_f: not enough memory\n");
+		Con_Printf("SCR_WritePCXfile: not enough memory\n");
 		return;
 	} 
  
@@ -657,7 +657,10 @@ static void SCR_WritePCXfile (char *filename, byte *data, int width, int height,
 		
 // write output file 
 	length = pack - (byte *)pcx;
-	COM_WriteFile (filename, pcx, length);
+
+	if(COM_WriteFile (filename, pcx, length) != -1){
+		Con_Printf ("Saved to %s\n", filename);
+	}
 } 
  
 
@@ -670,21 +673,20 @@ SCR_ScreenShot_f
 void SCR_ScreenShot_f (void) 
 { 
 	int     i = 0;
-	char	pcxname[MAX_OSPATH];
+	char	filename[MAX_OSPATH];
 
-	int len = COM_FormPath(pcxname, com_gamedir, "screenshot_", sizeof(pcxname));
+	int len = COM_FormPath(filename, com_gamedir, "shot", sizeof(filename));
 
 	// 
 	// find a file name to save it to 
 	//
 	for(i = 0; i < 100; i++){ 
-		sprintf (pcxname + len, "%d.pcx", i);
-		if(Sys_FileTime(pcxname) == -1){
+		sprintf (filename + len, "%d.pcx", i);
+		if(Sys_FileTime(filename) == -1){
 			// 
 			// save the pcx file 
 			// 
-			SCR_WritePCXfile (pcxname, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
-			Con_Printf ("Wrote %s\n", pcxname);
+			SCR_WritePCXfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
 			return;
 		}
 	}

@@ -4,7 +4,6 @@
 #include "stm32f7xx_hal.h"
 #include "disco_serial.h"
 #include "quakedef.h"
-#include "filesys.h"
 #include "fatfs.h"
 
 typedef struct {
@@ -26,6 +25,7 @@ static void disco_MpuConfig (void);
 //static void sdcard_benchmark(void);
 
 int Sys_main(int argc, char **argv);
+int syscalls_getsize(int fd);
 
 static void sys_error(const char* err){
     puts(err);
@@ -104,7 +104,7 @@ int main(void){
 
     if(fp){
         
-        int size = FileSys_GetSize(fp->_file);
+        int size = syscalls_getsize(fp->_file);
         char *param = (char*)calloc(size, 1);
 
         if(param){

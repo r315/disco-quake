@@ -1,7 +1,6 @@
 #include <errno.h>
 #include "stm32f7xx_hal.h"
 #include "quakedef.h"
-#include "filesys.h"
 #include "fatfs.h"
 
 #define MAX_HANDLES             10
@@ -34,7 +33,7 @@ Functions prototypes
 //void Host_Shutdown(void){}
 //void COM_InitArgv (int argc, char **argv){}
 //void Host_Frame (float time){}
-
+int syscalls_getsize(int fd);
 /*
 ===============================================================================
 
@@ -56,14 +55,6 @@ static int findhandle (void)
 }
 
 /*
-================
-filelength
-================
-*/
-static int filelength (FILE *f){
-    return FileSys_GetSize(f->_file);
-}
-/*
 ===============================================================================
 
 FILE IO
@@ -80,8 +71,7 @@ int Sys_FileOpenRead (char *path, int *hndl)
 
     fp = fopen(path, "rb");
 
-    if (!fp)
-    {
+    if (!fp){
         *hndl = -1;
         return -1;
     }
@@ -89,7 +79,7 @@ int Sys_FileOpenRead (char *path, int *hndl)
     sys_handles[i] = fp;
     *hndl = i;
     
-    return filelength(fp);	
+    return syscalls_getsize(fp->_file);	
 }
 
 int Sys_FileOpenWrite (char *path)
@@ -100,8 +90,12 @@ int Sys_FileOpenWrite (char *path)
     i = findhandle ();
 
     f = fopen(path, "wb");
-    if (!f)
-        Sys_Error ("Error opening %s: %s", path,strerror(errno));
+    
+    if (!f){
+        //Sys_Error ("Error opening %s: %s", path,strerror(errno));
+        return -1;
+    }
+    
     sys_handles[i] = f;
     
     return i;

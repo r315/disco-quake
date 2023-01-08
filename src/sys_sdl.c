@@ -141,10 +141,12 @@ int		findhandle (void)
 {
 	int		i;
 	
-	for (i=1 ; i<MAX_HANDLES ; i++)
+	for (i = 1; i < MAX_HANDLES; i++)
 		if (!sys_handles[i])
 			return i;
+	
 	Sys_Error ("out of handles");
+
 	return -1;
 }
 
@@ -174,11 +176,12 @@ int Sys_FileOpenRead (char *path, int *hndl)
 	i = findhandle ();
 
 	f = fopen(path, "rb");
-	if (!f)
-	{
+
+	if (!f){
 		*hndl = -1;
 		return -1;
 	}
+	
 	sys_handles[i] = f;
 	*hndl = i;
 	
@@ -193,8 +196,12 @@ int Sys_FileOpenWrite (char *path)
 	i = findhandle ();
 
 	f = fopen(path, "wb");
-	if (!f)
-		Sys_Error ("Error opening %s: %s", path,strerror(errno));
+
+	if (!f){
+		//Sys_Error ("Error opening %s: %s", path,strerror(errno));
+		return -1;
+	}	
+	
 	sys_handles[i] = f;
 	
 	return i;

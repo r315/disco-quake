@@ -34,7 +34,6 @@
 #include <sys/times.h>
 #include <sys/unistd.h>
 
-#include "filesys.h"
 #include "fatfs.h"
 
 /* Variables */
@@ -44,6 +43,12 @@ extern int errno;
 extern int __io_putchar(int ch) __attribute__((weak));
 __attribute__((weak)) int __io_getchar(void) {return -1;};
 
+int syscalls_Open(char *path, int flags);
+int syscalls_Close(int fd);
+int syscalls_Read(int fd, char *ptr, int len);
+int syscalls_Write(int fd, char *ptr, int len);
+int syscalls_Lseek(int fd, int offset, int directive);
+
 /**
  * 
  *  File access functions 
@@ -52,7 +57,7 @@ __attribute__((weak)) int __io_getchar(void) {return -1;};
  * */
 int _open(char *path, int flags, ...)
 {
-	return FileSys_Open(path, flags);
+	return syscalls_Open(path, flags);
 }
 
 int _close(int file)
@@ -62,7 +67,7 @@ int _close(int file)
 		return -1;
 	}
 
-	return FileSys_Close(file);
+	return syscalls_Close(file);
 }
 
 int _read(int file, char *ptr, int len)
@@ -75,7 +80,7 @@ int _read(int file, char *ptr, int len)
 		return len;
 	}
 
-	return FileSys_Read(file, ptr, len);
+	return syscalls_Read(file, ptr, len);
 }
 
 int _write(int file, char *ptr, int len)
@@ -89,7 +94,7 @@ int _write(int file, char *ptr, int len)
 		return len;
 	}
 
-	return FileSys_Write(file, ptr, len);
+	return syscalls_Write(file, ptr, len);
 }
 
 int _lseek(int file, int offset, int directive)
@@ -104,7 +109,7 @@ int _lseek(int file, int offset, int directive)
 		return -1;
 	}	
 
-	return FileSys_Lseek(file, offset, directive);
+	return syscalls_Lseek(file, offset, directive);
 }
 /* ********************************************************** */
 int _getpid(void)
@@ -185,21 +190,21 @@ FileSys IO
 
 ===============================================================================
 */
-typedef struct openedfile_s{
-    FIL file;
-    char path[64];
-    int fd;
-    struct openedfile_s *next;
-}openedfile_t;
+typedef struct flink_s{
+    FIL file;       // FatFs object
+    char path[64];  // Full file path
+    int fd;         // Libc file descriptor
+    struct flink_s *next;
+}flink_t;
 
-static openedfile_t openedfiles = {
+static flink_t linkedfiles = {
     .path[0] = '\0',
     .fd = 16,			// first 16 files are reserved for system
     .next = NULL
 };
 
-static openedfile_t *getOpenedFile(int fd){
-    openedfile_t *of = openedfiles.next;
+static flink_t *getFileLink(int fd){
+    flink_t *of = linkedfiles.next;
 
     while(of != NULL){
         if(of->fd == fd){		
@@ -215,15 +220,15 @@ static openedfile_t *getOpenedFile(int fd){
  * @brief Redirect from _open
  * 
  * @param path 		: File path
- * @param flags 	: Not used
+ * @param flags 	: access mode
  * @return int 		: File descriptor number, -1 on fail
  */
-int FileSys_Open(char *path, int flags){
-    openedfile_t *newof, *of;
+int syscalls_Open(char *path, int flags){
+    flink_t *newof, *of;
     FRESULT fr;
     int fd;
 
-    of = &openedfiles;   
+    of = &linkedfiles;   
 
     while(of->next != NULL){		
         of = of->next;
@@ -231,10 +236,14 @@ int FileSys_Open(char *path, int flags){
 
     fd = of->fd + 1;
 
-    newof = (openedfile_t*)malloc(sizeof(openedfile_t));
+    newof = (flink_t*)malloc(sizeof(flink_t));
+
+    if(!newof){
+        return -1;
+    }
 
     if(flags & O_WRONLY) {
-        fr = f_open(&newof->file, path, FA_WRITE);
+        fr = f_open(&newof->file, path, FA_WRITE | FA_CREATE_ALWAYS);
     }else{
         fr = f_open(&newof->file, path, FA_READ);
     }    
@@ -255,8 +264,8 @@ int FileSys_Open(char *path, int flags){
     return -1;
 }
 
-int FileSys_Close(int fd){
-    openedfile_t *of = &openedfiles;
+int syscalls_Close(int fd){
+    flink_t *of = &linkedfiles;
 
      while(of->next != NULL){
         if(of->next->fd == fd){					
@@ -264,7 +273,7 @@ int FileSys_Close(int fd){
                 return -1;
             }
             //Sys_Printf("File closed: %s %d\n", of->next->path, of->next->fd);
-            openedfile_t *nn = of->next->next;
+            flink_t *nn = of->next->next;
             free(of->next);
             of->next = nn;
             return 0;
@@ -275,9 +284,9 @@ int FileSys_Close(int fd){
     return -1;
 }
 
-static int filesys_read_write(int fd, char *ptr, int len, void *oper){
+static int syscalls_read_write(int fd, char *ptr, int len, void *oper){
     UINT brw;
-    openedfile_t *of = getOpenedFile(fd);
+    flink_t *of = getFileLink(fd);
 
     if(of == NULL){
         return -1;
@@ -290,16 +299,16 @@ static int filesys_read_write(int fd, char *ptr, int len, void *oper){
     return brw;
 }
 
-int FileSys_Read(int fd, char *ptr, int len){
-    return filesys_read_write(fd, ptr, len, f_read);
+int syscalls_Read(int fd, char *ptr, int len){
+    return syscalls_read_write(fd, ptr, len, f_read);
 }
 
-int FileSys_Write(int fd, char *ptr, int len){
-    return filesys_read_write(fd, ptr, len, f_write);
+int syscalls_Write(int fd, char *ptr, int len){
+    return syscalls_read_write(fd, ptr, len, f_write);
 }
 
-int FileSys_Lseek(int fd, int offset, int directive){
-    openedfile_t *of = getOpenedFile(fd);
+int syscalls_Lseek(int fd, int offset, int directive){
+    flink_t *of = getFileLink(fd);
 
     if(of == NULL){
         return -1;
@@ -312,10 +321,10 @@ int FileSys_Lseek(int fd, int offset, int directive){
     return -1;
 }
 
-int FileSys_GetSize(int fd){
-	openedfile_t 	*of;
+int syscalls_getsize(int fd){
+	flink_t 	*of;
 
-    of = getOpenedFile(fd);
+    of = getFileLink(fd);
 
     if(of == NULL){
         return 0;

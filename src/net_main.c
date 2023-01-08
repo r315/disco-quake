@@ -914,7 +914,6 @@ void		NET_Shutdown (void)
 void NET_Poll(void)
 {
 	PollProcedure *pp;
-	qboolean	useModem;
 
 	if (!configRestored)
 	{

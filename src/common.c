@@ -1279,21 +1279,22 @@ COM_WriteFile
 
 ============
 */
-void COM_WriteFile (char *filename, void *data, int len)
+int COM_WriteFile (char *filename, void *data, int len)
 {
-    int             handle;
+    int     handle;
 
     handle = Sys_FileOpenWrite (filename);
 
-    if (handle == -1)
-    {
-        Sys_Printf ("COM_WriteFile: failed on %s\n", filename);
-        return;
+    if (handle == -1){
+        Sys_Printf ("COM_WriteFile: Fail opening '%s' for write\n", filename);
+        return -1;
     }
     
     Sys_Printf ("COM_WriteFile: %s\n", filename);
     Sys_FileWrite (handle, data, len);
     Sys_FileClose (handle);
+    
+    return handle;
 }
 
 
@@ -1336,7 +1337,7 @@ void COM_CopyFile (char *netpath, char *cachepath)
     
     remaining = Sys_FileOpenRead (netpath, &in);            
     COM_CreatePath (cachepath);     // create directories up to the cache file
-    out = Sys_FileOpenWrite (cachepath);
+    out = Sys_FileOpenWrite (cachepath); // TODO: Handle file open failure
     
     while (remaining)
     {
