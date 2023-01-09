@@ -21,6 +21,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "quakedef.h"
 #include "r_local.h"
+#include "stdint.h"
+
+#ifdef WIN32
+#define PACK(s) __pragma( pack(push, 1) ) s __pragma( pack(pop) )
+#else
+#define PACK(s) s __attribute__((packed))
+#endif
 
 typedef struct pcx_s
 {
@@ -38,6 +45,31 @@ typedef struct pcx_s
     char	filler[58];
     unsigned char	data;			// unbounded
 } pcx_t;
+
+PACK(struct bmp_s {
+	uint8_t 	sig[2];		// BM signature
+	uint32_t	filesize;	// Total filesize in bytes
+	uint32_t 	reserved;	
+	uint32_t	offset;		// Data offset from start
+	uint32_t 	dibsize;	// DIB Header size
+	uint32_t 	width;		// Image width
+	uint32_t 	height;		// Image height
+	uint16_t	planes;		// Color planes (1)
+	uint16_t	bpp;		// Bits per pixel
+	uint32_t 	comp;		// Compression
+	uint32_t	imgesize;	// Image size
+	uint32_t	xres;		// 
+	uint32_t	yres;		// 
+	uint32_t	ncolors;	// Size of color palette
+	uint32_t	icolors; 	//
+	uint8_t		pixeldata[]; 
+});
+
+typedef struct bmp_s bmp_t;
+
+#define BMP_HEADER_SIZE		14
+#define BMP_DIB_HEADER_SIZE 40
+#define BMP_8BPP			8
 
 typedef enum { CPY_ALL, CPY_TOP, CPY_SB } scrcopy_t;
 
@@ -600,8 +632,7 @@ void SCR_DrawConsole (void)
 SCR_WritePCXfile
 ============== 
 */ 
-static void SCR_WritePCXfile (char *filename, byte *data, int width, int height,
-	int rowbytes, byte *palette) 
+static void SCR_WritePCXfile (char *filename, int width, int height, int rowbytes, byte *data, byte *palette) 
 {
 	int		i, j, length;
 	pcx_t	*pcx;
@@ -663,8 +694,71 @@ static void SCR_WritePCXfile (char *filename, byte *data, int width, int height,
 	}
 } 
  
+/* 
+============== 
+SCR_WriteBMPfile
+============== 
+*/ 
+static void SCR_WriteBMPfile (char *filename, int width, int height, int rowbytes, byte *data, byte *palette){
+	bmp_t		*bmp;
+	uint8_t		*pdata;
+	uint8_t		padding;
+	uint32_t	row_size;
+	uint16_t	palette_size = 256;
 
+	row_size = (uint32_t)(width * BMP_8BPP + 31) / 32 * 4;
+	padding = row_size - width;
+	  
+	bmp = Hunk_TempAlloc (BMP_HEADER_SIZE + BMP_DIB_HEADER_SIZE + (palette_size * 4) + (row_size * height));
+	if (bmp == NULL){
+		Con_Printf("SCR_WriteBMPfile: not enough memory\n");
+		return;
+	}
 
+	bmp->sig[0] = 0x42;
+	bmp->sig[1] = 0x4D;
+	bmp->planes = 1;
+	bmp->bpp = BMP_8BPP;
+	bmp->width = width;
+	bmp->height = height;
+	bmp->comp = 0;
+	bmp->imgesize = 0;
+	bmp->xres = 0;
+	bmp->yres = 0;
+	bmp->icolors = 0;
+	bmp->ncolors = palette_size;
+
+	// Copy palette, 4 bytes per color
+	pdata = &bmp->pixeldata;
+	for (int i = 0; i < bmp->ncolors; i++, palette += 3) {
+		*pdata++ = palette[2];
+		*pdata++ = palette[1];
+		*pdata++ = palette[0];
+		*pdata++ = 0xFF;
+	}
+
+	// Copy pixel data and flip image
+	data = data + (width * (height - 1));
+	for (int j = 0; j < height; j++) {	
+		for (int i = 0; i < width; i++) {
+			*pdata++ = data[i];
+		}
+
+		data -= width;
+
+		for (uint8_t t = 0; t < padding; t++) {
+			*pdata++ = 0;
+		}
+	}
+
+	bmp->dibsize = BMP_DIB_HEADER_SIZE;
+	bmp->offset = BMP_HEADER_SIZE + bmp->dibsize + (bmp->ncolors * 4);
+	bmp->filesize = (uint32_t)pdata - (uint32_t)bmp;
+
+	if(COM_WriteFile (filename, bmp, bmp->filesize) != -1){
+		Con_Printf ("Saved to %s\n", filename);
+	}
+}
 /* 
 ================== 
 SCR_ScreenShot_f
@@ -681,12 +775,11 @@ void SCR_ScreenShot_f (void)
 	// find a file name to save it to 
 	//
 	for(i = 0; i < 100; i++){ 
-		sprintf (filename + len, "%d.pcx", i);
+		//sprintf (filename + len, "%d.pcx", i);
+		sprintf(filename + len, "%d.bmp", i);
 		if(Sys_FileTime(filename) == -1){
-			// 
-			// save the pcx file 
-			// 
-			SCR_WritePCXfile (filename, vid.buffer, vid.width, vid.height, vid.rowbytes, host_basepal);
+			SCR_WriteBMPfile (filename, vid.width, vid.height, vid.rowbytes, vid.buffer, host_basepal);			
+			//SCR_WritePCXfile (filename, vid.width, vid.height, vid.rowbytes, vid.buffer, host_basepal);
 			return;
 		}
 	}

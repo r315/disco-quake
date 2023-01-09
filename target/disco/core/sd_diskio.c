@@ -39,7 +39,7 @@
  * in case of errors in either BSP_SD_ReadCpltCallback() or BSP_SD_WriteCpltCallback()
  * the value by default is as defined in the BSP platform driver otherwise 30 secs
  */
-#define SD_TIMEOUT (30 * 1000)
+#define SD_TIMEOUT (5 * 1000)
 #define SD_DEFAULT_BLOCK_SIZE 512
 #define ENABLE_SD_DMA_CACHE_MAINTENANCE 1   // Required for DMA
 
@@ -111,11 +111,13 @@ static const char *sd_errors[] = {
     "SD_ERROR_TIMEOUT"
 };
 
-static void sd_error(void){   
+static DRESULT sd_error(void){   
     for(uint8_t bit = 0; bit < 32; bit++){
         if(uSdHandle.ErrorCode & (1<<bit))
             printf("sd_diskio: %s\n", sd_errors[bit]);
     }
+
+    return uSdHandle.ErrorCode;
 }
 
 /**
@@ -223,7 +225,7 @@ static DRESULT read_sector(uint32_t *data, uint32_t sector, uint32_t count){
         while(ReadStatus == 0){
             if ((HAL_GetTick() - timeout) >= SD_TIMEOUT) {
                 /* Timeout occurred */
-                return RES_ERROR; 
+                goto sd_err;
             }        
         }
 
@@ -249,8 +251,8 @@ static DRESULT read_sector(uint32_t *data, uint32_t sector, uint32_t count){
         }while ((HAL_GetTick() - timeout) < SD_TIMEOUT);
     }
 #endif
-    sd_error();
-    return RES_ERROR;
+sd_err:    
+    return sd_error();
 }
 
 /**
@@ -312,7 +314,7 @@ static DRESULT write_sector(uint32_t *data, uint32_t sector, uint32_t count){
         while (WriteStatus == 0) {
             if((HAL_GetTick() - timeout) >= SD_TIMEOUT){
                 /* Timeout occurred */
-                return RES_ERROR;
+                goto sd_err;
             }
         }
 
@@ -336,8 +338,8 @@ static DRESULT write_sector(uint32_t *data, uint32_t sector, uint32_t count){
         while (BSP_SD_GetCardState() != MSD_OK);
     }while(res != MSD_OK && --retry); // On error, try again
 #endif    
-    sd_error();
-    return RES_ERROR;
+sd_err:
+    return sd_error();
 }
 
 /* USER CODE BEGIN beforeWriteSection */
